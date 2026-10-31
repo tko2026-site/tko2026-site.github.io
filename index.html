@@ -232,6 +232,12 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 .kc .timg{width:120px;height:120px;--fs:50px}.kc .kn{text-align:center}.kc .kn b{display:block;font-family:var(--f-display);font-weight:400;font-size:32px}.kc .kn span{font-size:30px;font-weight:900}
 .kc .kr{position:absolute;top:10px;right:14px;font-family:var(--f-display);font-size:60px;line-height:1;color:var(--gold)}.kc .kr small{font-size:26px}.kc .kr em{display:block;font-style:normal;font-size:26px;text-align:right;color:#fff}
 .kc.top{box-shadow:0 0 50px var(--tc);transform:scale(1.04)}.kc.dim{filter:grayscale(1) brightness(.5)}
+/* 演出：追加点 */
+.sc-bonus .blist{position:absolute;left:120px;right:120px;top:210px;bottom:60px;display:grid;grid-template-columns:1fr 1fr;gap:20px 40px;align-content:start}
+.bcard{display:flex;align-items:center;gap:22px;padding:18px 26px;border-radius:14px;background:#18214d;border:4px solid var(--tc)}
+.bcard .timg{width:110px;height:110px;flex:none;--fs:46px}.bcard .bx{flex:1;min-width:0}.bcard .bx small{display:block;font-size:28px;color:#c6cdf0;font-weight:900}
+.bcard .bx b{font-family:var(--f-display);font-weight:400;font-size:46px;white-space:nowrap}.bcard .bp{font-family:var(--f-display);font-size:80px;color:var(--gold)}
+.bcard.fresh{animation:chipPop .6s .2s both}.bnone{grid-column:1/-1;text-align:center;font-size:40px;color:#9aa6d8;margin-top:160px}
 /* 演出：障害物競走 */
 .sc-relay .legs{position:absolute;left:80px;right:80px;top:200px;bottom:50px;display:grid;grid-template-columns:1fr 1fr;gap:18px 40px;align-content:start}
 .leg{display:flex;gap:18px;align-items:flex-start;padding:18px 22px;border-radius:12px;background:#18214d;border:3px solid #36437f}
@@ -401,8 +407,8 @@ const CONFIG = {
                 { name: '2コート', matches: [['fox', 'kirby'], ['link', 'yoshi'], ['pikachu', 'mario'], ['dk', 'samus']] },
               ] },
     quiz:   { name: 'クイズ', max: 100 },
-    // 一番よかったチームに点を入れる（得点は仮）
-    radio:  { name: 'ラジオ体操', max: 20, provisional: true },
+    // その他の追加点（ラジオ体操のベストチーム、当日のファッションポイントなど）。内部の名前は radio のまま
+    radio:  { name: 'その他（追加点）', short: '他', points: 10, reasons: ['ラジオ体操', 'ファッション'] },
     relay:  { name: '障害物競走', provisional: true, points: [20, 15, 12, 10, 8, 5, 2, 1],
               // 走る順（企画班のルール文の記載順）。baton は次の走者に渡すもの
               legs: [
@@ -442,7 +448,7 @@ const EV = CONFIG.events;
 
 function blankState() {
   const s = { rev: 0, locked: false, members: {}, entries: {}, submitted: {},
-    results: { kariru: Array.from({ length: EV.kariru.rounds }, () => []), relay: [], quiz: {}, kehai: {}, radio: {}, kariruBonus: {} },
+    results: { kariru: Array.from({ length: EV.kariru.rounds }, () => []), relay: [], quiz: {}, kehai: {}, radio: {}, kariruBonus: {}, bonus: [] },
     present: { scene: 'title', step: 0, match: null, event: 'total', nonce: 0 } };
   for (const t of CONFIG.teams) {
     s.members[t.id] = [];
@@ -461,6 +467,7 @@ function normalize(s) {
   s.present = Object.assign(b0.present, s.present || {});
   s.members = s.members || {}; s.entries = s.entries || {}; s.submitted = s.submitted || {};
   s.results.radio = s.results.radio || {}; s.results.kariruBonus = s.results.kariruBonus || {};
+  if (!Array.isArray(s.results.bonus)) s.results.bonus = [];
   for (const t of CONFIG.teams) {
     const en = s.entries[t.id] = s.entries[t.id] || {};
     en.kariru = en.kariru || Array(EV.kariru.rounds).fill('');
@@ -653,7 +660,7 @@ function eventPoints() {
   const out = {}; for (const t of CONFIG.teams) out[t.id] = { kariru: 0, kehai: 0, quiz: 0, relay: 0, radio: 0 };
   state.results.kariru.forEach(order => { const p = placePoints(order, EV.kariru.points); for (const id in p) out[id].kariru += p[id]; });
   for (const id in state.results.kariruBonus) if (out[id] && state.results.kariruBonus[id]) out[id].kariru += EV.kariru.bonus;
-  for (const id in state.results.radio) if (out[id]) out[id].radio = Math.max(0, Math.min(EV.radio.max, Number(state.results.radio[id]) || 0));
+  state.results.bonus.forEach(b => { if (out[b.team]) out[b.team].radio += Number(b.pt) || 0; });  // 追加点（理由ごとに何件でも）
   const rp = placePoints(state.results.relay, EV.relay.points); for (const id in rp) out[id].relay += rp[id];
   for (const id in state.results.quiz) if (out[id]) out[id].quiz = Math.max(0, Math.min(EV.quiz.max, Number(state.results.quiz[id]) || 0));
   const kp = EV.kehai.points;
@@ -913,9 +920,14 @@ function adminResults() {
     <section class="panel stack"><div class="evhead"><h2>${EV.relay.name}<span class="tag-prov">得点は仮</span></h2></div>
       <div id="rlBox">${orderPicker(state.results.relay, null, EV.relay)}</div></section>
 
-    <section class="panel stack"><div class="evhead"><h2>${EV.radio.name}<span class="tag-prov">得点は仮</span></h2><span class="muted small">一番よかったチームに点を入れる（0〜${EV.radio.max}点）</span></div>
-      <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr))">${CONFIG.teams.map(t => `<label class="fld"><span><span class="tdot" style="--tc:${t.color}"></span>${esc(t.name)}</span>
-        <input type="number" min="0" max="${EV.radio.max}" data-rd="${t.id}" value="${state.results.radio[t.id] ?? ''}" class="num"></label>`).join('')}</div></section>
+    <section class="panel stack"><div class="evhead"><h2>${EV.radio.name}</h2><span class="muted small">ラジオ体操のベストチーム、ファッションポイントなど。何件でも足せます</span></div>
+      <div class="row" style="align-items:flex-end">
+        <label class="fld" style="flex:2;min-width:160px">理由<input type="text" id="bnLabel" list="bnReasons" placeholder="例：ラジオ体操"><datalist id="bnReasons">${EV.radio.reasons.map(r => `<option value="${esc(r)}">`).join('')}</datalist></label>
+        <label class="fld" style="flex:1.5;min-width:130px">チーム<select id="bnTeam"><option value="">— 選択 —</option>${CONFIG.teams.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('')}</select></label>
+        <label class="fld" style="width:90px">点数<input type="number" id="bnPt" value="${EV.radio.points}" class="num"></label>
+        <button class="btn primary" type="button" id="bnAdd">追加</button></div>
+      <div class="stack" style="gap:6px">${state.results.bonus.length ? state.results.bonus.map((b, i) => `<div class="row" style="justify-content:space-between;padding:6px 10px;border:1px solid var(--line);border-radius:6px">
+        <span><span class="tdot" style="--tc:${TEAM[b.team].color}"></span><b>${esc(TEAM[b.team].name)}</b>　${esc(b.label)}　<b style="color:var(--gold)">+${b.pt}</b></span><button class="btn sm" type="button" data-bndel="${i}">取り消す</button></div>`).join('') : '<span class="muted small">まだありません</span>'}</div></section>
 
     <section class="panel stack"><div class="evhead"><h2>${EV.quiz.name}</h2><span class="muted small">0〜${EV.quiz.max}点</span></div>
       <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr))">${CONFIG.teams.map(t => `<label class="fld"><span><span class="tdot" style="--tc:${t.color}"></span>${esc(t.name)}</span>
@@ -932,7 +944,12 @@ function adminResults() {
   at.querySelectorAll('[data-r]').forEach(b => b.onclick = () => { krRound = +b.dataset.r; adminResults(); });
   bindOrder($('#krBox'), () => state.results.kariru[krRound], () => { save(); adminResults(); });
   bindOrder($('#rlBox'), () => state.results.relay, () => { save(); adminResults(); });
-  at.querySelectorAll('[data-rd]').forEach(i => i.onchange = () => { state.results.radio[i.dataset.rd] = i.value === '' ? undefined : Number(i.value); save(); });
+  $('#bnAdd').onclick = () => {
+    const label = $('#bnLabel').value.trim() || '追加点', team = $('#bnTeam').value, pt = Number($('#bnPt').value) || 0;
+    if (!team) { toast('チームを選んでください'); return; }
+    state.results.bonus.push({ label, team, pt, at: Date.now() }); save(); adminResults(); toast(`${TEAM[team].name}に「${label}」+${pt}点`);
+  };
+  at.querySelectorAll('[data-bndel]').forEach(b => b.onclick = () => { state.results.bonus.splice(+b.dataset.bndel, 1); save(); adminResults(); });
   at.querySelectorAll('[data-krb]').forEach(i => i.onchange = () => { state.results.kariruBonus[i.dataset.krb] = i.checked; save(); });
   at.querySelectorAll('[data-qz]').forEach(i => i.onchange = () => { state.results.quiz[i.dataset.qz] = i.value === '' ? undefined : Number(i.value); save(); });
   $('#quizUrl').onchange = e => { try { localStorage.setItem('tko2026-quiz-url', e.target.value.trim()); } catch (x) {} };
@@ -976,28 +993,28 @@ function importQuiz(d) {
 function adminScore() {
   const pts = eventPoints(), rk = ranking();
   $('#atab').innerHTML = `<div class="tscroll panel" style="padding:0"><table class="t">
-    <thead><tr><th>順位</th><th>チーム</th><th>${EV.radio.name}<span class="tag-prov">仮</span></th><th>${EV.kehai.name}<span class="tag-prov">仮</span></th><th>${EV.kariru.name}</th><th>${EV.relay.name}<span class="tag-prov">仮</span></th><th>${EV.quiz.name}</th><th>合計</th></tr></thead>
+    <thead><tr><th>順位</th><th>チーム</th><th>${EV.radio.name}</th><th>${EV.kehai.name}<span class="tag-prov">仮</span></th><th>${EV.kariru.name}</th><th>${EV.relay.name}<span class="tag-prov">仮</span></th><th>${EV.quiz.name}</th><th>合計</th></tr></thead>
     <tbody>${rk.map(r => { const p = pts[r.t.id]; return `<tr><td class="num"><b>${r.rank}</b></td><td><span class="tdot" style="--tc:${r.t.color}"></span>${esc(r.t.name)}</td>
       <td class="num">${p.radio}</td><td class="num">${p.kehai}</td><td class="num">${p.kariru}</td><td class="num">${p.relay}</td><td class="num">${p.quiz}</td><td class="num"><b>${p.total}</b></td></tr>`; }).join('')}</tbody></table></div>
-    <p class="muted small" style="margin-top:10px">${EV.kehai.name}の仮得点：1試合ごとに 勝ち ${EV.kehai.points.win} ／ 引き分け ${EV.kehai.points.draw} ／ 負け ${EV.kehai.points.lose}（各チーム2試合）。${EV.relay.name}は借り人競争と同じ配点を仮置き。${EV.radio.name}は最大${EV.radio.max}点を仮置き。借り人競争は全員借りられたチームに+${EV.kariru.bonus}点。</p>`;
+    <p class="muted small" style="margin-top:10px">${EV.kehai.name}の仮得点：1試合ごとに 勝ち ${EV.kehai.points.win} ／ 引き分け ${EV.kehai.points.draw} ／ 負け ${EV.kehai.points.lose}（各チーム2試合）。${EV.relay.name}は借り人競争と同じ配点を仮置き。借り人競争は全員借りられたチームに+${EV.kariru.bonus}点。</p>`;
 }
 
 /* 当日の進行表：上から順に「次へ」で進む */
 const RUN = (() => {
   const r = [{ label: 'オープニング（タイトル）', scene: 'title' }, { label: 'チーム紹介', scene: 'teams' },
-    { label: `${EV.radio.name} 結果発表`, scene: 'rank', event: 'radio' }];
+    { label: '追加点の発表（ラジオ体操など）', scene: 'bonus' }];
   for (let k = 1; k <= 4; k++) r.push({ label: `${EV.kehai.name} 第${k}試合（2コート同時）`, scene: 'tama', round: k });
   r.push({ label: `${EV.kehai.name} 対戦表`, scene: 'bracket' }, { label: `${EV.kehai.name} 順位発表`, scene: 'rank', event: 'kehai' });
   for (let k = 1; k <= EV.kariru.rounds; k++) r.push({ label: `${EV.kariru.name} 第${k}回`, scene: 'kariru', round: k });
   r.push({ label: `${EV.kariru.name} 順位発表`, scene: 'rank', event: 'kariru' },
     { label: `${EV.relay.name} 種目紹介`, scene: 'relay' }, { label: `${EV.relay.name} 順位発表`, scene: 'rank', event: 'relay' },
-    { label: '中間順位（クイズの前）', scene: 'rank', event: 'total' }, { label: 'クイズ（クイズの画面に切り替える）', scene: 'quiz' },
+    { label: '追加点の発表（その時点まで）', scene: 'bonus' }, { label: '中間順位（クイズの前）', scene: 'rank', event: 'total' }, { label: 'クイズ（クイズの画面に切り替える）', scene: 'quiz' },
     { label: '総合順位発表 → 優勝', scene: 'rank', event: 'total' });
   return r;
 })();
 const STEPLABEL = { title: ['タイトル', 'オープニング映像'], teams: i => i ? `${i} / ${CONFIG.teams.length} チーム紹介済み` : '全チーム表示',
   rank: i => i ? `${i} / ${CONFIG.teams.length} 位まで公開` : '順位は伏せた状態', tama: ['対戦カード', 'カウントダウン → 試合中', '結果表示'],
-  kariru: ['出走者', '結果'], bracket: ['表示中'], relay: ['表示中'], quiz: ['表示中'] };
+  kariru: ['出走者', '結果'], bracket: ['表示中'], relay: ['表示中'], quiz: ['表示中'], bonus: ['表示中'] };
 function stepLabel() { const p = state.present, f = STEPLABEL[p.scene]; return typeof f === 'function' ? f(p.step) : (f || [])[p.step] || ''; }
 function goRun(i) {
   i = Math.max(0, Math.min(RUN.length - 1, i));
@@ -1054,7 +1071,7 @@ function fillSample() {
   const shuffle = a => a.map(v => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map(v => v[1]);
   state.results.kariru = state.results.kariru.map((_, i) => i < 5 ? shuffle(CONFIG.teams.map(t => t.id)).slice(0, 7) : []);
   CONFIG.teams.forEach(t => { state.results.quiz[t.id] = 40 + Math.round(Math.random() * 12) * 5; });
-  state.results.radio = { [CONFIG.teams[Math.floor(Math.random() * 8)].id]: EV.radio.max };
+  state.results.bonus = [{ label: 'ラジオ体操', team: CONFIG.teams[Math.floor(Math.random() * 8)].id, pt: EV.radio.points }];
   MATCHES.slice(0, 5).forEach(d => { state.results.kehai[d.id] = { a: Math.floor(Math.random() * 15), b: Math.floor(Math.random() * 15) }; });
   state.present.match = MATCHES[5].id;
 }
@@ -1071,7 +1088,7 @@ function fitStage() { const s = Math.min(innerWidth / 1920, innerHeight / 1080);
 function setScene(sc) { const p = state.present; p.scene = sc; p.step = 0; p.nonce++; if (sc === 'vs' && !p.match) p.match = nextMatchId(); save(); if (mode() === 'present') renderPresent(); }
 function maxStep() {
   const p = state.present;
-  return { title: 1, teams: CONFIG.teams.length, bracket: 0, vs: EV.kehai.battles, rank: CONFIG.teams.length, tama: 2, kariru: 1, relay: 0, quiz: 0 }[p.scene] ?? 0;
+  return { title: 1, teams: CONFIG.teams.length, bracket: 0, vs: EV.kehai.battles, rank: CONFIG.teams.length, tama: 2, kariru: 1, relay: 0, quiz: 0, bonus: 0 }[p.scene] ?? 0;
 }
 function stepBy(d) {
   const p = state.present; p.step = Math.max(0, Math.min(maxStep(), p.step + d));
@@ -1112,10 +1129,11 @@ function renderPresent() {
     P.timers.forEach(clearTimeout); P.timers = [];
     P.key = key; P.step = -1;
     sceneEl.innerHTML = '';
-    ({ title: buildTitle, teams: buildTeams, bracket: buildBracket, vs: buildVS, rank: buildRank, tama: buildTama, kariru: buildKariru, relay: buildRelay, quiz: buildQuiz })[p.scene](sceneEl);
+    ({ title: buildTitle, teams: buildTeams, bracket: buildBracket, vs: buildVS, rank: buildRank, tama: buildTama, kariru: buildKariru, relay: buildRelay, quiz: buildQuiz, bonus: buildBonus })[p.scene](sceneEl);
   } else if (p.scene === 'bracket') { buildBracket(sceneEl); }
   else if (p.scene === 'tama') { updateTama(); }
   else if (p.scene === 'kariru') { updateKariru(); }
+  else if (p.scene === 'bonus') { buildBonus(sceneEl, true); }
   else if (p.scene === 'vs') { updateLineup(); }
   applyStep(p.step);
 }
@@ -1203,6 +1221,16 @@ function updateKariru(live) {
 function buildRelay(el) {
   el.innerHTML = `<div class="scene sc-relay"><div class="band"><span class="en">OBSTACLE RACE</span><span class="ja">${esc(EV.relay.name)}</span></div>
     <div class="legs">${EV.relay.legs.map((l, i) => `<div class="leg"><span class="no num">${i + 1}</span><div><b>${esc(l.task)}${l.people > 1 ? `<small>（${l.people}人）</small>` : ''}</b><p>${esc(l.desc)}</p></div></div>`).join('')}</div></div>`;
+}
+/* 追加点（ラジオ体操・ファッションポイントなど）：入ったものから順に並べる。新しく入ったものは音つきで出る */
+function buildBonus(el, update) {
+  const list = state.results.bonus;
+  const key = JSON.stringify(list); if (update && P && P.bonusKey === key) return;
+  const fresh = update && P && P.bonusKey ? list.length - JSON.parse(P.bonusKey).length : 0; if (P) P.bonusKey = key;
+  el.innerHTML = `<div class="scene sc-bonus"><div class="band"><span class="en">BONUS</span><span class="ja">追加点</span></div>
+    <div class="blist">${list.length ? list.map((b, i) => { const t = TEAM[b.team]; return `<div class="bcard ${i >= list.length - Math.max(0, fresh) ? 'fresh' : ''}" style="--tc:${t.color}">${timg(t)}<div class="bx"><small>${esc(b.label)}</small><b>${esc(t.name)}</b></div><div class="bp num">+${b.pt}</div></div>`; }).join('')
+      : '<div class="bnone">まだ追加点はありません</div>'}</div></div>`;
+  if (fresh > 0) play(CONFIG.assets.sfx.reveal, .9);
 }
 /* クイズ：クイズの画面に切り替える前の表示 */
 function buildQuiz(el) {
@@ -1381,7 +1409,7 @@ function renderViewer() {
     ${!nm.done ? `<section class="vhero"><div class="eyebrow">次の対戦　${esc(EV.kehai.name)} ${esc(nm.def.label)}</div>
       <div class="vs-mini"><div class="side">${timg(TEAM[nm.L])}${esc(TEAM[nm.L].name)}</div><span class="v">VS</span><div class="side">${timg(TEAM[nm.R])}${esc(TEAM[nm.R].name)}</div></div></section>` : ''}
     <section class="panel"><div class="evhead"><h2>総合順位</h2><span class="muted small">pt</span></div>
-      ${rk.map(r => `<div class="rankrow ${r.rank === 1 && r.pt > 0 ? 'top' : ''}"><span class="rk">${r.rank}</span>${timg(r.t)}<span><b>${esc(r.t.name)}</b><br><span class="muted small num">体${pts[r.t.id].radio}・${EV.kehai.short}${pts[r.t.id].kehai}・借${pts[r.t.id].kariru}・障${pts[r.t.id].relay}・ク${pts[r.t.id].quiz}</span></span><span class="score num">${r.pt}</span></div>`).join('')}</section>
+      ${rk.map(r => `<div class="rankrow ${r.rank === 1 && r.pt > 0 ? 'top' : ''}"><span class="rk">${r.rank}</span>${timg(r.t)}<span><b>${esc(r.t.name)}</b><br><span class="muted small num">${EV.radio.short}${pts[r.t.id].radio}・${EV.kehai.short}${pts[r.t.id].kehai}・借${pts[r.t.id].kariru}・障${pts[r.t.id].relay}・ク${pts[r.t.id].quiz}</span></span><span class="score num">${r.pt}</span></div>`).join('')}</section>
     <section class="panel stack"><h2>${esc(EV.kehai.name)} 対戦表</h2>
       ${EV.kehai.courts.map(c => `<div class="stack" style="gap:6px"><span class="eyebrow">${esc(c.name)}</span><div class="mlist">${MATCHES.filter(d => d.court === c.name).map(d => mline(match(d.id))).join('')}</div></div>`).join('')}</section>
     <section class="panel stack"><h2>${esc(EV.kariru.name)}</h2>
