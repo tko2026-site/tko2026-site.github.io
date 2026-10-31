@@ -542,10 +542,11 @@ let muted = false;
 const audioCache = {};
 /* 素材の場所：PCのファイルから開いたときは assets/ のファイル。
    ネット上（GitHub版）で運営としてログインしたときは、Google ドライブに置いた同じ名前のファイルを使う */
-let DRIVE = null;
+let DRIVE = null; const BLOB = {};
 function R(src) {
   if (!DRIVE || !src || !src.startsWith('assets/')) return src;
-  const id = DRIVE[src.slice(7)]; if (!id) return src;
+  const key = src.slice(7); if (BLOB[key]) return BLOB[key];
+  const id = DRIVE[key]; if (!id) return src;
   return /\.(png|jpe?g|gif|webp|svg)$/i.test(src) ? `https://lh3.googleusercontent.com/d/${id}` : `https://drive.usercontent.google.com/download?id=${id}&export=download`;
 }
 async function loadDriveAssets() {
@@ -556,9 +557,19 @@ async function loadDriveAssets() {
     // フォルダの入れ方が違っても（assets ごと入れた等）、bgm/ sfx/ voice/ … からの名前でそろえる
     DRIVE = {};
     for (const [k, id] of Object.entries(d.files || {})) DRIVE[k.replace(/^(?:.*\/)?((?:bgm|sfx|voice|victory|teams|bg|video|font)\/[^/]+)$/, '$1')] = id;
-    // 音は先に読み込んでおく（本番で鳴るまで待たないように）
-    Object.keys(DRIVE).filter(k => /\.mp3$/i.test(k) && !/^bgm\//.test(k)).forEach(k => { const u = R('assets/' + k); if (!audioCache[u]) { const a = new Audio(u); a.preload = 'auto'; a.addEventListener('error', () => { audioCache[u] = false; }); audioCache[u] = a; } });
-    toast(`演出用の素材をドライブから読み込みました（${Object.keys(DRIVE).length}件）`);
+    // 演出で使う音と画像は、中身ごと受け取ってこのPCの中に持っておく（本番で鳴るまで待たない・ドライブ側の制限を受けない）
+    const want = Object.keys(d.files || {}).filter(k => /^(?:.*\/)?(sfx|voice|victory|teams|bg)\/[^/]+\.(mp3|png|jpe?g|webp)$/i.test(k));
+    const type = n => /\.mp3$/i.test(n) ? 'audio/mpeg' : /\.png$/i.test(n) ? 'image/png' : /\.webp$/i.test(n) ? 'image/webp' : 'image/jpeg';
+    let got = 0;
+    for (let i = 0; i < want.length; i += 12) {
+      const r = await apiPost({ a: 'files', pass: auth.pass, names: want.slice(i, i + 12) });
+      for (const [n, b64] of Object.entries((r && r.files) || {})) {
+        const bin = atob(b64), u8 = new Uint8Array(bin.length); for (let j = 0; j < bin.length; j++) u8[j] = bin.charCodeAt(j);
+        const key = n.replace(/^(?:.*\/)?((?:sfx|voice|victory|teams|bg)\/[^/]+)$/, '$1');
+        BLOB[key] = URL.createObjectURL(new Blob([u8], { type: type(n) })); got++;
+      }
+    }
+    toast(`演出用の素材をドライブから読み込みました（${got}件）`);
     if (mode() === 'present' || mode() === 'admin') { teardownPresent(); rerender(); }
   } catch (e) { toast('ドライブの素材を読み込めませんでした（音・画像なしで続けます）'); }
 }
