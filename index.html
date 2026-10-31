@@ -528,9 +528,11 @@ async function pushOps() {
   try {
     const d = await apiPost({ a: 'ops', role: auth.role, team: auth.team, pass: auth.pass, ops });
     const during = diffOps(sent, JSON.parse(JSON.stringify(state)));  // 送っている間に変えた分
+    const before = JSON.stringify(state);
     if (d.state) { adopt(d.state, d.rev); if (during.length) { state = applyOps(state, during); again = true; } }
     if (!d.ok) toast(d.error || '保存できませんでした');
-    netErr = false; rerender(true);
+    netErr = false;
+    if (!d.ok || JSON.stringify(state) !== before) rerender(true);  // 自分の入力どおりなら描き直さない（操作中の画面が動かないように）
   } catch (e) {
     netErr = true; toast('通信できませんでした。自動でもう一度送ります'); setTimeout(pushOps, 3000);
   }
@@ -779,13 +781,17 @@ function renderRegister() {
       if (all.length > names.length) toast(`名簿は${CONFIG.maxMembers}人までです。${CONFIG.maxMembers + 1}人目以降は入れていません`);
       state.members[t.id] = names;
       // 名簿から消えた人は割り当てから外す
-      const keep = v => names.includes(v) ? v : '';
+      const keep = v => names.includes(v) ? v : '', en = state.entries[t.id];  // 保存のたびに state が新しくなるので、毎回取り直す
       en.kariru = en.kariru.map(keep); en.kehai = en.kehai.map(keep); en.relay = en.relay.map(a => a.map(keep));
       save(); renderRegister(); toast('名簿を反映しました');
     };
+    // 選んだら、画面のすべての選択欄をいまのデータにまとめて書き込む（保存の行き違いで取りこぼさないように）
     $('#app').querySelectorAll('select[data-ev]').forEach(s => s.onchange = () => {
-      const ev = s.dataset.ev, i = +s.dataset.i;
-      if (ev === 'relay') en.relay[i][+s.dataset.j] = s.value; else en[ev][i] = s.value;
+      const en = state.entries[t.id];
+      $('#app').querySelectorAll('select[data-ev]').forEach(x => {
+        const ev = x.dataset.ev, i = +x.dataset.i;
+        if (ev === 'relay') en.relay[i][+x.dataset.j] = x.value; else en[ev][i] = x.value;
+      });
       save(); renderChecks();
     });
     $('#submitBtn').onclick = () => {
@@ -885,10 +891,11 @@ function orderPicker(order, onChange, label) {
     <div class="small">${order.length ? order.map((id, i) => `<b>${i + 1}位</b> ${esc(TEAM[id].name)} <span class="muted">(${pts[i] || 0}点)</span>`).join('　') : '<span class="muted">ゴールした順にチームを押してください。不該当のチームは押さずに飛ばします（繰り上げ）。</span>'}</div>
     <div class="row"><button class="btn sm" type="button" data-undo>1つ戻す</button><button class="btn sm" type="button" data-clear>クリア</button></div></div>`;
 }
+// order は「いまの配列を返す関数」で受け取る（保存のたびに state が新しくなるため）
 function bindOrder(root, order, commit) {
-  root.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => { if (!order.includes(b.dataset.pick)) { order.push(b.dataset.pick); commit(); } });
-  root.querySelector('[data-undo]').onclick = () => { order.pop(); commit(); };
-  root.querySelector('[data-clear]').onclick = () => { order.length = 0; commit(); };
+  root.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => { const o = order(); if (!o.includes(b.dataset.pick)) { o.push(b.dataset.pick); commit(); } });
+  root.querySelector('[data-undo]').onclick = () => { order().pop(); commit(); };
+  root.querySelector('[data-clear]').onclick = () => { order().length = 0; commit(); };
 }
 
 function adminResults() {
@@ -923,8 +930,8 @@ function adminResults() {
   </div>`;
   const at = $('#atab');
   at.querySelectorAll('[data-r]').forEach(b => b.onclick = () => { krRound = +b.dataset.r; adminResults(); });
-  bindOrder($('#krBox'), krOrder, () => { save(); adminResults(); });
-  bindOrder($('#rlBox'), state.results.relay, () => { save(); adminResults(); });
+  bindOrder($('#krBox'), () => state.results.kariru[krRound], () => { save(); adminResults(); });
+  bindOrder($('#rlBox'), () => state.results.relay, () => { save(); adminResults(); });
   at.querySelectorAll('[data-rd]').forEach(i => i.onchange = () => { state.results.radio[i.dataset.rd] = i.value === '' ? undefined : Number(i.value); save(); });
   at.querySelectorAll('[data-krb]').forEach(i => i.onchange = () => { state.results.kariruBonus[i.dataset.krb] = i.checked; save(); });
   at.querySelectorAll('[data-qz]').forEach(i => i.onchange = () => { state.results.quiz[i.dataset.qz] = i.value === '' ? undefined : Number(i.value); save(); });
