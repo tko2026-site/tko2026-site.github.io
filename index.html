@@ -1,0 +1,1165 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>TKO2026 大会システム</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;700;900&display=swap">
+<style>
+/* 見出しフォント：assets/font/title.otf（または .ttf / .woff2）を置くと自動で差し替わる */
+@font-face{font-family:"TitleFont";src:url("assets/font/title.otf"),url("assets/font/title.ttf"),url("assets/font/title.woff2");font-display:swap}
+
+/* レイアウト方針：夜の体育館ステージ。濃紺の地に、黄色のスラッシュと各チーム色で熱量を出す（単一ダークテーマ） */
+:root{
+  --bg:#0b1024;        /* 地 */
+  --bg2:#141b3d;       /* パネル */
+  --bg3:#1d2654;       /* 入力欄など */
+  --line:#2c3770;      /* 罫線 */
+  --fg:#f3f5ff;        /* 文字 */
+  --muted:#98a1cc;     /* 補助文字 */
+  --gold:#ffd23f;      /* アクセント */
+  --red:#ff4057;       /* 警告・VS */
+  --ok:#3ddc97;        /* 完了 */
+  --f-display:"TitleFont","Dela Gothic One","Hiragino Sans","Yu Gothic",sans-serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+[hidden]{display:none!important}
+
+/* ===== 画面切替バー ===== */
+#modebar{position:sticky;top:0;z-index:50;display:flex;gap:6px;align-items:center;flex-wrap:wrap;
+  padding:10px 16px;padding-top:calc(10px + env(safe-area-inset-top,0px));background:#070b1a;border-bottom:1px solid var(--line)}
+#modebar .brand{font-family:var(--f-display);font-size:15px;margin-right:8px;letter-spacing:.04em}
+#modebar .brand b{color:var(--gold)}
+#modebar a{padding:6px 12px;border-radius:4px;text-decoration:none;color:var(--muted);font-weight:700;font-size:14px}
+#modebar a.on{background:var(--gold);color:#111}
+#modebar .sp{flex:1}
+#modebar .tiny{font-size:12px;color:var(--muted);background:none;border:1px solid var(--line);border-radius:4px;padding:4px 8px}
+body.presenting #modebar{display:none}
+
+/* ===== 共通UI ===== */
+.wrap{max-width:1100px;margin:0 auto;padding-inline:16px;padding-block:20px 60px}
+.wrap.narrow{max-width:560px}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;line-height:1.25;text-wrap:balance;margin:0}
+h1{font-size:26px}
+h2{font-size:19px}
+h3{font-size:16px}
+.eyebrow{font-size:12px;letter-spacing:.14em;color:var(--gold);font-weight:700}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.panel{background:var(--bg2);border:1px solid var(--line);border-radius:6px;padding:18px}
+.stack{display:flex;flex-direction:column;gap:14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:14px}
+.btn{background:var(--bg3);border:1px solid var(--line);border-radius:4px;padding:8px 14px;font-weight:700}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--gold);color:#111;border-color:var(--gold)}
+.btn.danger{border-color:var(--red);color:var(--red)}
+.btn.sm{padding:4px 10px;font-size:13px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+input[type=text],input[type=password],input[type=number],select,textarea{background:var(--bg3);border:1px solid var(--line);border-radius:4px;padding:8px 10px;width:100%;min-width:0}
+textarea{resize:vertical}
+label.fld{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:700;border:1px solid currentColor}
+.pill.ok{color:var(--ok)}.pill.warn{color:var(--gold)}.pill.ng{color:var(--muted)}
+.tag-prov{font-size:11px;color:var(--gold);border:1px dashed var(--gold);border-radius:3px;padding:0 5px;margin-left:6px;vertical-align:2px}
+.warnbox{border-left:3px solid var(--gold);background:rgba(255,210,63,.08);padding:8px 12px;font-size:13px}
+.tscroll{overflow-x:auto}
+table.t{border-collapse:collapse;width:100%;font-size:14px}
+table.t th,table.t td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+table.t th{font-size:12px;color:var(--muted);font-weight:700}
+.tdot{display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--tc);margin-right:6px;vertical-align:0}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ok);color:#06210f;font-weight:900;padding:10px 18px;border-radius:4px;z-index:99;animation:toast 2.2s forwards}
+@keyframes toast{0%{opacity:0;transform:translate(-50%,10px)}10%,80%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
+
+/* チーム画像（ファイルがなければ頭文字の仮表示） */
+.timg{position:relative;display:grid;place-items:center;overflow:hidden}
+.timg img{width:100%;height:100%;object-fit:contain;position:relative;z-index:1}
+.timg .fb{display:none}
+.timg.noimg .fb{display:grid;place-items:center;width:78%;aspect-ratio:1;max-height:90%;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--tc) 70%,#fff),var(--tc));color:#fff;
+  font-family:var(--f-display);font-size:calc(var(--fs,40px));text-shadow:0 2px 0 rgba(0,0,0,.35)}
+
+/* ===== 登録画面 ===== */
+.teampick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media (max-width:480px){.teampick{grid-template-columns:repeat(2,1fr)}}
+.teampick button{background:var(--bg2);border:2px solid var(--line);border-radius:6px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;font-weight:700;font-size:13px}
+.teampick button.sel{border-color:var(--tc);box-shadow:inset 0 0 0 1px var(--tc);background:color-mix(in srgb,var(--tc) 18%,var(--bg2))}
+.teampick .timg{width:56px;height:56px;--fs:22px}
+.teamhead{display:flex;gap:14px;align-items:center;padding:14px;border-radius:6px;background:linear-gradient(100deg,color-mix(in srgb,var(--tc) 55%,var(--bg2)),var(--bg2) 70%)}
+.teamhead .timg{width:72px;height:72px;--fs:28px;flex:none}
+.slot{display:grid;grid-template-columns:92px 1fr;gap:8px;align-items:center}
+.slot .lab{font-size:13px;font-weight:700}
+.slot .lab small{display:block;font-weight:400;color:var(--muted);font-size:11px;line-height:1.35}
+.slot .two{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.slot select.dup{border-color:var(--gold)}
+.slot .legdesc{grid-column:1/-1;margin:-2px 0 6px;font-size:12px;line-height:1.5;color:var(--muted)}
+.slot .baton{display:inline-block;margin-left:8px;padding:0 7px;border:1px solid var(--gold);border-radius:99px;color:var(--gold);font-size:11px;font-weight:700}
+.evhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+
+/* ===== 管理画面 ===== */
+.admintabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin-bottom:16px}
+.admintabs button{background:none;border:none;border-bottom:3px solid transparent;padding:8px 14px;font-weight:700;color:var(--muted)}
+.admintabs button.on{color:var(--fg);border-bottom-color:var(--gold)}
+.orderpick{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+@media (max-width:560px){.orderpick{grid-template-columns:repeat(2,1fr)}}
+.orderpick button{border:1px solid var(--line);background:var(--bg3);border-left:6px solid var(--tc);border-radius:4px;padding:8px;text-align:left;font-weight:700;font-size:14px}
+.orderpick button.done{opacity:.35}
+.orderpick button .pl{float:right;color:var(--gold);font-family:var(--f-display)}
+.roundtabs{display:flex;gap:4px;flex-wrap:wrap}
+.roundtabs button{min-width:40px;padding:4px 8px;border-radius:4px;border:1px solid var(--line);background:var(--bg3);font-weight:700;font-size:13px}
+.roundtabs button.on{background:var(--gold);color:#111;border-color:var(--gold)}
+.roundtabs button.full{border-color:var(--ok)}
+.match{border:1px solid var(--line);border-radius:6px;padding:12px;background:var(--bg3)}
+.match.locked{opacity:.45}
+.match .mh{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.bt{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center;font-size:13px;padding:4px 0;border-top:1px dashed var(--line)}
+.bt .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bt .nm.r{text-align:right}
+.bt .res{display:flex;gap:3px}
+.bt .res button{width:34px;padding:3px 0;border-radius:3px;border:1px solid var(--line);background:var(--bg2);font-size:12px;font-weight:700}
+.bt .res button.on{background:var(--gold);color:#111;border-color:var(--gold)}
+.score{font-family:var(--f-display);font-size:18px}
+.ctrlgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.ctrlgrid .btn.on{background:var(--gold);color:#111;border-color:var(--gold)}
+
+/* ===== 観戦画面 ===== */
+.vhero{padding:18px;border-radius:6px;background:repeating-linear-gradient(115deg,transparent 0 22px,rgba(255,210,63,.06) 22px 26px),var(--bg2);border:1px solid var(--line)}
+.vs-mini{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-top:10px}
+.vs-mini .side{display:flex;flex-direction:column;align-items:center;gap:4px;font-weight:900}
+.vs-mini .timg{width:72px;height:72px;--fs:28px}
+.vs-mini .v{font-family:var(--f-display);color:var(--red);font-size:28px}
+.rankrow{display:grid;grid-template-columns:34px 30px 1fr auto;gap:10px;align-items:center;padding:8px 4px;border-bottom:1px solid var(--line)}
+.rankrow .rk{font-family:var(--f-display);font-size:18px;text-align:center}
+.rankrow .timg{width:30px;height:30px;--fs:13px}
+.rankrow.top .rk{color:var(--gold)}
+.mlist{display:flex;flex-direction:column;gap:6px}
+.mline{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;font-size:14px;padding:6px 8px;background:var(--bg3);border-radius:4px}
+.mline .w{font-weight:900;color:var(--gold)}
+.mline .l{color:var(--muted)}
+.mline .r{text-align:right}
+
+/* ===== 演出画面（1920×1080 を画面に合わせて拡縮） ===== */
+#presentRoot{position:fixed;inset:0;background:#000;overflow:hidden}
+#stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:center center;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 120%,#24307a 0%,transparent 60%),radial-gradient(ellipse at 50% -20%,#1b2463 0%,transparent 55%),var(--bg)}
+#stage .bgimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+#stage .stripes{position:absolute;inset:-200px;z-index:0;opacity:.5;
+  background:repeating-linear-gradient(115deg,transparent 0 60px,rgba(255,255,255,.025) 60px 64px);animation:drift 30s linear infinite}
+@keyframes drift{to{transform:translateX(220px)}}
+.scene{position:absolute;inset:0;z-index:2}
+.sc-title{display:grid;place-items:center;text-align:center}
+.sc-title .slash{position:absolute;left:-10%;right:-10%;top:47%;height:190px;background:var(--gold);transform:skewY(-6deg) scaleX(0);transform-origin:left;animation:slashIn .5s .1s cubic-bezier(.2,.9,.2,1) forwards}
+.sc-title .tt{position:relative;font-family:var(--f-display);font-size:250px;line-height:1;color:#fff;letter-spacing:.02em;
+  -webkit-text-stroke:6px #0b1024;paint-order:stroke fill;text-shadow:12px 12px 0 #0b1024;transform:skewX(-8deg);opacity:0;animation:popIn .6s .45s cubic-bezier(.2,1.6,.4,1) forwards}
+.sc-title .st{position:relative;margin-top:28px;display:inline-block;background:#0b1024;color:var(--gold);font-family:var(--f-display);font-size:58px;padding:6px 36px;transform:skewX(-8deg);opacity:0;animation:fadeUp .5s .9s forwards}
+.sc-title .logo{position:relative;max-width:1300px;max-height:620px;opacity:0;animation:popIn .7s .3s cubic-bezier(.2,1.4,.4,1) forwards}
+.sc-title.haslogo .tt,.sc-title.haslogo .st{display:none}
+.sc-title .press{position:absolute;bottom:90px;left:0;right:0;font-family:var(--f-display);font-size:36px;letter-spacing:.3em;color:#fff;animation:blink 1.4s steps(2) infinite}
+.sc-title video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:5;background:#000}
+@keyframes slashIn{to{transform:skewY(-6deg) scaleX(1)}}
+@keyframes popIn{0%{opacity:0;transform:skewX(-8deg) scale(2.4)}100%{opacity:1;transform:skewX(-8deg) scale(1)}}
+@keyframes fadeUp{from{opacity:0;transform:skewX(-8deg) translateY(30px)}to{opacity:1;transform:skewX(-8deg) translateY(0)}}
+@keyframes blink{50%{opacity:0}}
+
+.band{position:absolute;left:0;top:56px;height:110px;padding:0 80px 0 70px;display:flex;align-items:center;gap:28px;
+  background:var(--gold);color:#0b1024;clip-path:polygon(0 0,100% 0,calc(100% - 50px) 100%,0 100%);animation:bandIn .45s cubic-bezier(.2,.9,.2,1) both}
+.band .en{font-family:var(--f-display);font-size:64px;letter-spacing:.04em}
+.band .ja{font-weight:900;font-size:30px}
+@keyframes bandIn{from{transform:translateX(-100%)}to{transform:none}}
+
+.sc-teams .cards{position:absolute;left:90px;right:90px;top:220px;display:grid;grid-template-columns:repeat(4,1fr);gap:34px 30px}
+.tcard{position:relative;height:380px;opacity:0;animation:cardIn .5s calc(.25s + var(--i)*.09s) cubic-bezier(.2,1.2,.4,1) forwards;transition:transform .25s,filter .25s}
+.tcard .bgc{position:absolute;inset:0;clip-path:polygon(8% 0,100% 0,92% 100%,0 100%);
+  background:linear-gradient(160deg,color-mix(in srgb,var(--tc) 85%,#fff) 0%,var(--tc) 45%,color-mix(in srgb,var(--tc) 55%,#000) 100%)}
+.tcard .bgc::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,transparent 0 14px,rgba(255,255,255,.08) 14px 16px)}
+.tcard .timg{position:absolute;left:8%;right:8%;top:10px;bottom:84px;--fs:110px}
+.tcard .plate{position:absolute;left:4%;right:4%;bottom:14px;height:62px;background:#0b1024;clip-path:polygon(4% 0,100% 0,96% 100%,0 100%);
+  display:flex;align-items:center;justify-content:center;font-family:var(--f-display);font-size:36px;color:#fff}
+.tcard .no{position:absolute;left:22px;top:6px;font-family:var(--f-display);font-size:30px;color:#fff;-webkit-text-stroke:3px #0b1024;paint-order:stroke fill;z-index:2}
+.sc-teams.focusing .tcard{filter:brightness(.4) saturate(.6)}
+.sc-teams .tcard.focus{filter:none;transform:scale(1.1);z-index:3}
+.sc-teams .tcard.focus .bgc{animation:flash .5s}
+.sc-teams .tcard.called:not(.focus){filter:brightness(.75)}
+@keyframes cardIn{from{opacity:0;transform:translateY(80px) scale(.8)}to{opacity:1;transform:none}}
+@keyframes flash{0%{filter:brightness(3)}100%{filter:brightness(1)}}
+.namecall{position:absolute;left:0;right:0;bottom:36px;height:0;z-index:6;pointer-events:none}
+.namecall .nc{position:absolute;left:0;right:0;bottom:0;height:150px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(90deg,transparent,var(--tc) 18%,var(--tc) 82%,transparent);transform:skewY(-3deg);animation:ncIn 1.8s forwards}
+.namecall .nc span{font-family:var(--f-display);font-size:110px;color:#fff;-webkit-text-stroke:5px #0b1024;paint-order:stroke fill;letter-spacing:.06em}
+@keyframes ncIn{0%{opacity:0;transform:skewY(-3deg) translateX(-30%)}15%{opacity:1;transform:skewY(-3deg) translateX(0)}80%{opacity:1}100%{opacity:0;transform:skewY(-3deg) translateX(10%)}}
+
+/* 対戦表（人間玉入れ） */
+.sc-sched .cols{position:absolute;left:60px;right:60px;top:210px;bottom:50px;display:grid;grid-template-columns:1fr 1fr;gap:50px}
+.sc-sched .crt{display:flex;flex-direction:column;gap:18px}
+.sc-sched .cname{font-family:var(--f-display);font-size:44px;color:var(--gold)}
+.sc-sched .mrow{display:grid;grid-template-columns:96px 1fr 140px 1fr;align-items:center;gap:12px;height:150px;padding:0 16px;background:#18214d;border:3px solid #36437f;border-radius:10px}
+.sc-sched .mrow.fresh{animation:chipPop .5s .3s both}
+.sc-sched .rd{font-weight:900;font-size:26px;color:#9aa6d8}
+.sc-sched .tm{display:flex;align-items:center;gap:12px;min-width:0}.sc-sched .tm.r{justify-content:flex-end}
+.sc-sched .tm .timg{width:76px;height:76px;flex:none;--fs:30px}
+.sc-sched .tm b{font-family:var(--f-display);font-weight:400;font-size:34px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc-sched .tm.win b{color:var(--tc);text-shadow:0 0 18px var(--tc)}.sc-sched .tm.lost{filter:grayscale(1) brightness(.5)}
+.sc-sched .bl{text-align:center;font-family:var(--f-display);font-size:46px;white-space:nowrap}.sc-sched .bl i{font-style:normal;color:#6b78b8;margin:0 6px}
+.sc-bracket svg.lines{position:absolute;inset:0;width:1920px;height:1080px}
+.sc-bracket .base{fill:none;stroke:#36437f;stroke-width:6}
+.sc-bracket .hl{fill:none;stroke-width:10;stroke-linejoin:miter;filter:drop-shadow(0 0 8px var(--glow))}
+.sc-bracket .hl.fresh{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:draw .9s .3s ease-out forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.chip{position:absolute;height:100px;display:flex;align-items:center;gap:10px;padding:0 14px 0 6px;background:#18214d;border:3px solid #36437f;
+  clip-path:polygon(0 0,100% 0,calc(100% - 16px) 100%,0 100%);transition:filter .3s}
+.chip .timg{width:88px;height:88px;flex:none;--fs:34px}
+.chip .nm{font-family:var(--f-display);font-size:32px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip.win{border-color:var(--tc);background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 60%,#18214d),#18214d)}
+.chip.lost{filter:grayscale(1) brightness(.45)}
+.chip.empty{justify-content:center;color:#4a5796;font-family:var(--f-display);font-size:34px}
+.chip.right{flex-direction:row-reverse;padding:0 6px 0 14px;clip-path:polygon(0 0,100% 0,100% 100%,16px 100%)}
+.chip.fresh{animation:chipPop .5s 1s both}
+@keyframes chipPop{0%{transform:scale(1.3);filter:brightness(2.5)}100%{transform:none}}
+.mscore{position:absolute;font-family:var(--f-display);font-size:28px;color:var(--gold);transform:translate(-50%,-50%);text-shadow:0 2px 0 #000;white-space:nowrap}
+.finalvs{position:absolute;left:960px;top:560px;transform:translate(-50%,-50%) skewX(-8deg);font-family:var(--f-display);font-size:64px;color:var(--red);-webkit-text-stroke:4px #0b1024;paint-order:stroke fill}
+.champ{position:absolute;left:740px;top:210px;width:440px;height:250px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border:4px solid #36437f;background:#121a40;clip-path:polygon(6% 0,94% 0,100% 100%,0 100%)}
+.champ .lab{font-family:var(--f-display);font-size:28px;letter-spacing:.2em;color:#4a5796}
+.champ.on{border-color:var(--gold);background:linear-gradient(180deg,color-mix(in srgb,var(--tc) 55%,#121a40),#121a40)}
+.champ.on .lab{color:var(--gold)}
+.champ .timg{width:150px;height:150px;--fs:60px}
+.champ .nm{font-family:var(--f-display);font-size:40px}
+.champ.fresh{animation:chipPop .8s 1.1s both}
+.roundlab{position:absolute;top:960px;font-family:var(--f-display);font-size:26px;color:#5664a8;transform:translateX(-50%);letter-spacing:.1em}
+
+/* VS画面 */
+.sc-vs .half{position:absolute;top:0;bottom:0;width:1920px;overflow:hidden}
+.sc-vs .half.l{left:0;clip-path:polygon(0 0,1050px 0,870px 100%,0 100%);animation:fromL .45s cubic-bezier(.2,.9,.2,1) both}
+.sc-vs .half.r{left:0;clip-path:polygon(1050px 0,100% 0,100% 100%,870px 100%);animation:fromR .45s cubic-bezier(.2,.9,.2,1) both}
+.sc-vs .half .fill{position:absolute;inset:0;background:linear-gradient(var(--dir),color-mix(in srgb,var(--tc) 90%,#fff) 0%,var(--tc) 40%,color-mix(in srgb,var(--tc) 40%,#000) 100%)}
+.sc-vs .half .fill::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(105deg,transparent 0 30px,rgba(0,0,0,.08) 30px 34px)}
+.sc-vs .half.l .fill{--dir:110deg}
+.sc-vs .half.r .fill{--dir:250deg}
+.sc-vs .pic{position:absolute;top:120px;width:760px;height:760px;--fs:300px;animation:picIn .6s .35s cubic-bezier(.2,1.1,.3,1) both}
+.sc-vs .half.l .pic{left:40px}
+.sc-vs .half.r .pic{right:40px;left:auto;--from:120px}
+.sc-vs .tname{position:absolute;bottom:70px;font-family:var(--f-display);font-size:120px;color:#fff;-webkit-text-stroke:6px #0b1024;paint-order:stroke fill;transform:skewX(-8deg);animation:fadeUp .5s .6s both;z-index:2}
+.sc-vs .half.l .tname{left:70px}
+.sc-vs .half.r .tname{right:70px}
+.sc-vs .seam{position:absolute;left:0;top:0;width:1920px;height:1080px;pointer-events:none}
+@keyframes fromL{from{transform:translateX(-100%)}to{transform:none}}
+@keyframes fromR{from{transform:translateX(100%)}to{transform:none}}
+@keyframes picIn{from{opacity:0;transform:translateX(var(--from,-120px)) scale(1.15)}to{opacity:1;transform:none}}
+.sc-vs .mlabel{position:absolute;left:50%;top:40px;transform:translateX(-50%) skewX(-8deg);background:#0b1024;color:var(--gold);font-family:var(--f-display);font-size:40px;padding:8px 40px;z-index:4;white-space:nowrap}
+.sc-vs .bigvs{position:absolute;left:960px;top:380px;transform:translate(-50%,-50%);z-index:5;font-family:var(--f-display);font-size:300px;line-height:1;
+  background:linear-gradient(180deg,#fff6c2 0%,var(--gold) 40%,#ff7a1a 70%,var(--red) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  -webkit-text-stroke:10px #0b1024;paint-order:stroke fill;filter:drop-shadow(10px 10px 0 #0b1024);animation:slam .5s .55s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes slam{0%{opacity:0;transform:translate(-50%,-50%) scale(4) rotate(-12deg)}100%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(-6deg)}}
+.sc-vs.shake{animation:shake .4s 1.0s}
+@keyframes shake{0%,100%{transform:none}20%{transform:translate(-14px,8px)}40%{transform:translate(12px,-10px)}60%{transform:translate(-8px,6px)}80%{transform:translate(6px,-4px)}}
+.lineup{position:absolute;left:960px;top:560px;transform:translateX(-50%);width:600px;z-index:5;display:flex;flex-direction:column;gap:6px;animation:fadeIn .4s 1.1s both}
+.lineup .li{display:grid;grid-template-columns:1fr 90px 1fr;align-items:center;gap:8px;height:60px;background:rgba(11,16,36,.88);padding:0 16px;font-size:26px;font-weight:900;clip-path:polygon(3% 0,100% 0,97% 100%,0 100%)}
+.lineup .li .b{font-family:var(--f-display);font-size:22px;color:var(--gold);text-align:center}
+.lineup .li .a{text-align:right;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.lineup .li .c{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.lineup .li.cur{background:var(--gold);color:#0b1024}
+.lineup .li.cur .b{color:#0b1024}
+.lineup .li .w{color:var(--gold)}
+.lineup .li .x{opacity:.35}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.count{position:absolute;inset:0;z-index:20;background:rgba(5,8,20,.82);display:grid;place-items:center;animation:fadeIn .2s both}
+.count .who{position:absolute;top:150px;left:0;right:0;text-align:center;font-family:var(--f-display);font-size:64px;color:#fff}
+.count .who b{color:var(--gold);font-weight:400}
+.count .bn{position:absolute;top:70px;left:0;right:0;text-align:center;font-family:var(--f-display);font-size:44px;color:var(--gold);letter-spacing:.2em}
+.count .n{font-family:var(--f-display);font-size:420px;line-height:1;color:#fff;-webkit-text-stroke:12px #0b1024;paint-order:stroke fill;animation:numPop .8s both}
+.count .fight{font-family:var(--f-display);font-size:380px;line-height:1;transform:skewX(-10deg);
+  background:linear-gradient(180deg,#fff,var(--gold) 45%,var(--red));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:10px #0b1024;paint-order:stroke fill;animation:fightIn .5s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes numPop{0%{opacity:0;transform:scale(2.2)}25%{opacity:1;transform:scale(1)}85%{opacity:1}100%{opacity:0;transform:scale(.85)}}
+@keyframes fightIn{from{opacity:0;transform:skewX(-10deg) scale(3)}to{opacity:1;transform:skewX(-10deg) scale(1)}}
+
+/* 順位発表 */
+.sc-rank .rows{position:absolute;left:180px;right:180px;top:200px;display:flex;flex-direction:column;gap:12px}
+.rrow{height:92px;display:grid;grid-template-columns:150px 110px 1fr 260px;align-items:center;gap:20px;padding:0 40px 0 20px;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 55%,#141b3d) 0%,#141b3d 55%);clip-path:polygon(0 0,100% 0,calc(100% - 30px) 100%,0 100%);
+  opacity:0;transform:translateX(-110%);transition:transform .45s cubic-bezier(.2,1,.3,1),opacity .2s}
+.rrow.show{opacity:1;transform:none}
+.rrow .rk{font-family:var(--f-display);font-size:58px;text-align:center}
+.rrow .timg{width:84px;height:84px;--fs:34px}
+.rrow .nm{font-family:var(--f-display);font-size:48px}
+.rrow .pt{font-family:var(--f-display);font-size:52px;text-align:right}
+.rrow .pt small{font-size:26px;margin-left:6px;color:var(--muted)}
+.rrow.first{background:linear-gradient(90deg,var(--gold) 0%,color-mix(in srgb,var(--tc) 50%,#141b3d) 40%,#141b3d 80%)}
+.rrow.first .rk{color:#0b1024}
+.winner{position:absolute;inset:0;z-index:20;display:grid;place-items:center;background:radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--tc) 70%,transparent) 0%,rgba(5,8,20,.92) 60%);animation:fadeIn .4s both}
+.winner .in{display:flex;flex-direction:column;align-items:center;gap:6px}
+.winner .timg{width:560px;height:560px;--fs:220px;animation:picIn .7s .1s both}
+.winner .lab{font-family:var(--f-display);font-size:70px;color:var(--gold);letter-spacing:.25em}
+.winner .nm{font-family:var(--f-display);font-size:150px;line-height:1.1;color:#fff;-webkit-text-stroke:7px #0b1024;paint-order:stroke fill;transform:skewX(-8deg);animation:popIn .6s .3s both}
+.confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:21}
+.confetti i{position:absolute;top:-40px;width:16px;height:28px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(1200px) rotate(720deg)}}
+
+.hint{position:absolute;right:24px;bottom:18px;z-index:40;background:rgba(0,0,0,.6);color:#cfd6ff;font-size:20px;padding:10px 16px;border-radius:4px;transition:opacity .4s}
+.hint.off{opacity:0}
+.startgate{position:absolute;inset:0;z-index:60;display:grid;place-items:center;background:rgba(5,8,20,.92);cursor:pointer}
+.startgate div{text-align:center;font-family:var(--f-display);font-size:56px;color:#fff}
+.startgate small{display:block;font-family:var(--f-body);font-size:24px;color:var(--muted);margin-top:16px}
+.exitbtn{position:fixed;left:10px;top:10px;z-index:70;font-size:12px;background:rgba(0,0,0,.5);color:#aab;border:1px solid #334;border-radius:4px;padding:4px 8px;opacity:0;transition:opacity .3s}
+.exitbtn:hover,.exitbtn:focus{opacity:1}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<nav id="modebar" aria-label="画面切り替え">
+  <span class="brand"><b>TKO2026</b> 大会システム</span>
+  <a href="#register" data-mode="register">チーム登録</a>
+  <a href="#admin" data-mode="admin">管理</a>
+  <a href="#present" data-mode="present">演出</a>
+  <a href="#viewer" data-mode="viewer">観戦</a>
+  <span class="sp"></span>
+  <span class="muted small" id="netState"></span>
+  <button class="tiny" id="staffOut" type="button" hidden>ログアウト</button>
+  <button class="tiny" id="resetBtn" type="button">データを初期化</button>
+</nav>
+<main id="app"></main>
+
+<script>
+/* =====================================================================
+   設定（ここを書き換えればチーム名・色・パスコード・種目・得点が変わる）
+   ===================================================================== */
+const CONFIG = {
+  // データ置き場（Apps Script のウェブアプリURL）。空ならこのブラウザの中だけに保存するデモ動作
+  api: 'https://script.google.com/macros/s/AKfycbwhBCyRRfEpK5CwRMRNU7HQGSCQnomZynyNkdOiRyvspXIrI1gw7UFJMxrhGJPzu2cb/exec',
+  maxMembers: 8,  // 1チームの名簿の最大人数
+  eventTitle: 'TKO2026',
+  eventSubtitle: 'チーム対抗戦',
+  // id は素材ファイル名に使う（assets/teams/<id>.png, assets/voice/<id>.mp3）
+  teams: [
+    { id: 'mario',   name: 'マリオ',         color: '#E8383D' },
+    { id: 'pikachu', name: 'ピカチュウ',     color: '#F5C400' },
+    { id: 'kirby',   name: 'カービィ',       color: '#EC5FB0' },
+    { id: 'dk',      name: 'ドンキーコング', color: '#F28A1E' },
+    { id: 'fox',     name: 'フォックス',     color: '#1F9D55' },
+    { id: 'yoshi',   name: 'ヨッシー',       color: '#9BD12E' },
+    { id: 'samus',   name: 'サムス',         color: '#3CC4EE' },
+    { id: 'link',    name: 'リンク',         color: '#2457E0' },
+  ],
+  events: {
+    // bonus：全員借りられたチーム（全員座ったチーム）への追加点（SKD より）
+    kariru: { name: '借り人競争', rounds: 8, points: [20, 15, 12, 10, 8, 5, 2, 1], bonus: 10 },
+    // 内部の名前は kehai のまま（旧・気配斬り）。2コート×4試合、各チーム2試合。玉数を入れ、多いほうが勝ち
+    kehai:  { name: '人間玉入れ', short: '玉', battles: 1, slot: '籠を背負う人', provisional: true,
+              points: { win: 20, draw: 10, lose: 0 },
+              // 企画班の対戦表どおり（同じ番号の試合は2コート同時）
+              courts: [
+                { name: '1コート', matches: [['pikachu', 'kirby'], ['dk', 'yoshi'], ['fox', 'mario'], ['link', 'samus']] },
+                { name: '2コート', matches: [['fox', 'kirby'], ['link', 'yoshi'], ['pikachu', 'mario'], ['dk', 'samus']] },
+              ] },
+    quiz:   { name: 'クイズ', max: 100 },
+    // 一番よかったチームに点を入れる（得点は仮）
+    radio:  { name: 'ラジオ体操', max: 20, provisional: true },
+    relay:  { name: '障害物競走', provisional: true, points: [20, 15, 12, 10, 8, 5, 2, 1],
+              // 走る順（企画班のルール文の記載順）。baton は次の走者に渡すもの
+              legs: [
+                { task: '二人三脚', desc: '2人の足をひもで結んで走る。ひもが解けたらその場で結び直し、転んだらその場からリスタート', people: 2 },
+                { task: 'ボトルフリップ', desc: '30秒以内にペットボトルを回転させて床に立てる。できなければ時間が来たら次の走者へ', people: 1 },
+                { task: '腕立て伏せ', desc: 'その場で腕立て10回', people: 1 },
+                { task: 'ぐるぐるバット', desc: '続けるのが難しいと判断したら、次の走者が30秒待ってから再開', people: 1, baton: 'バット' },
+                { task: '風船バッティング', desc: 'バットで風船を打ち、次の走者に取ってもらう（次の走者は動かず腕だけ伸ばす）。落としたらスタート地点から', people: 1, baton: '風船' },
+                { task: 'チンチロ', desc: 'お椀にサイコロ2つを投げ、ゾロ目でクリア（お椀の外のゾロ目は無効）', people: 1 },
+                { task: '全力疾走', desc: '100m全力で走る', people: 1 },
+              ] },
+  },
+  assets: {
+    teamImage: id => `assets/teams/${id}.png`,
+    voice:     id => `assets/voice/${id}.mp3`,
+    victory:   id => `assets/victory/${id}.mp3`,  // 優勝チームの勝利BGM（なければ sfx.win）
+    bg:      'assets/bg/main.png',
+    logo:    'assets/bg/logo.png',
+    opening: 'assets/video/opening.mp4',
+    sfx: {
+      select: 'assets/sfx/select.mp3', vs: 'assets/sfx/vs.mp3', count: 'assets/sfx/count.mp3',
+      fight: 'assets/sfx/fight.mp3',
+      // 3・2・1・GO! が1本に入った音声。countdownAt は各カウントが鳴る時刻（ミリ秒）
+      countdown: 'assets/sfx/countdown.mp3', countdownAt: [0, 1040, 2020, 3000],
+      reveal: 'assets/sfx/reveal.mp3', win: 'assets/sfx/win.mp3',
+      bgm: 'assets/sfx/bgm.mp3',
+    },
+  },
+};
+
+/* =====================================================================
+   データ（デモではブラウザ内に保存。本番は Supabase に置き換える）
+   ===================================================================== */
+const KEY = 'tko2026-demo-v1';
+const TEAM = Object.fromEntries(CONFIG.teams.map(t => [t.id, t]));
+const EV = CONFIG.events;
+
+function blankState() {
+  const s = { rev: 0, locked: false, members: {}, entries: {}, submitted: {},
+    results: { kariru: Array.from({ length: EV.kariru.rounds }, () => []), relay: [], quiz: {}, kehai: {}, radio: {}, kariruBonus: {} },
+    present: { scene: 'title', step: 0, match: null, event: 'total', nonce: 0 } };
+  for (const t of CONFIG.teams) {
+    s.members[t.id] = [];
+    s.entries[t.id] = { kariru: Array(EV.kariru.rounds).fill(''), kehai: Array(EV.kehai.battles).fill(''),
+      relay: EV.relay.legs.map(l => Array(l.people).fill('')) };
+  }
+  return s;
+}
+function normalize(s) {
+  // 共有モードでは一部の項目しか保存されていないことがあるので、足りない所を初期値で埋める
+  const b0 = blankState();
+  s.results = Object.assign(b0.results, s.results || {});
+  if (!Array.isArray(s.results.kariru)) s.results.kariru = b0.results.kariru;
+  s.results.kariru = Array.from({ length: EV.kariru.rounds }, (_, i) => Array.isArray(s.results.kariru[i]) ? s.results.kariru[i] : []);
+  if (!Array.isArray(s.results.relay)) s.results.relay = [];
+  s.present = Object.assign(b0.present, s.present || {});
+  s.members = s.members || {}; s.entries = s.entries || {}; s.submitted = s.submitted || {};
+  s.results.radio = s.results.radio || {}; s.results.kariruBonus = s.results.kariruBonus || {};
+  for (const t of CONFIG.teams) {
+    const en = s.entries[t.id] = s.entries[t.id] || {};
+    en.kariru = en.kariru || Array(EV.kariru.rounds).fill('');
+    en.kehai = Array.from({ length: EV.kehai.battles }, (_, i) => (en.kehai || [])[i] || '');
+    const old = Array.isArray(en.relay) ? en.relay : [];
+    // 走者の数や人数が変わったときは、同じ番号の枠だけ引き継ぐ
+    en.relay = EV.relay.legs.map((l, i) => Array.from({ length: l.people }, (_, j) => (old[i] && old[i][j]) || ''));
+    s.members[t.id] = s.members[t.id] || [];
+  }
+  return s;
+}
+function loadState() {
+  try { const raw = localStorage.getItem(KEY); if (raw) return normalize(Object.assign(blankState(), JSON.parse(raw))); } catch (e) {}
+  return blankState();
+}
+const REMOTE = !!CONFIG.api;
+let state = REMOTE ? normalize(blankState()) : loadState();
+let bc = null; try { if (!REMOTE) bc = new BroadcastChannel(KEY); } catch (e) {}
+
+/* ---------- 共有モード（Apps Script）----------
+   変えた所だけ（パスごと）を送るので、2台が同時に別の所を入力しても消し合わない */
+const AUTH_KEY = 'tko2026-auth';
+let auth = null; try { auth = JSON.parse(localStorage.getItem(AUTH_KEY) || 'null'); } catch (e) {}
+function setAuth(a) { auth = a; try { a ? localStorage.setItem(AUTH_KEY, JSON.stringify(a)) : localStorage.removeItem(AUTH_KEY); } catch (e) {} updateNav(); }
+const isStaff = () => !REMOTE || (auth && auth.role === 'staff');
+let synced = null, serverRev = -1, pending = false, again = false, loaded = !REMOTE, netErr = false;
+const clone = o => JSON.parse(JSON.stringify(o));
+function diffOps(a, b, path = '', out = []) {
+  const obj = x => x && typeof x === 'object' && !Array.isArray(x);
+  if (obj(a) && obj(b)) {
+    for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) {
+      if (!path && k === 'rev') continue;
+      const p = path ? `${path}.${k}` : k;
+      if (!(k in b)) out.push({ p, d: true });
+      else if (!(k in a)) out.push({ p, v: b[k] });
+      else diffOps(a[k], b[k], p, out);
+    }
+  } else if (JSON.stringify(a) !== JSON.stringify(b)) out.push({ p: path, v: b });
+  return out;
+}
+function applyOps(root, ops) {
+  for (const op of ops) {
+    if (!op.p) { root = op.d ? {} : clone(op.v); continue; }
+    const ks = op.p.split('.'); let o = root;
+    for (let i = 0; i < ks.length - 1; i++) { if (!o[ks[i]] || typeof o[ks[i]] !== 'object') o[ks[i]] = {}; o = o[ks[i]]; }
+    if (op.d) delete o[ks[ks.length - 1]]; else o[ks[ks.length - 1]] = clone(op.v);
+  }
+  return root;
+}
+async function apiPost(body) {
+  const r = await fetch(CONFIG.api, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
+  return r.json();
+}
+function adopt(serverState, rev) {
+  synced = clone(normalize(Object.assign(blankState(), serverState || {})));
+  state = clone(synced); serverRev = rev; loaded = true;
+}
+async function pushOps() {
+  if (pending) { again = true; return; }
+  if (isStaff() && loaded) state.scoreboard = eventPoints();  // スプシの「得点」表に書き写す用
+  const sent = clone(state), ops = diffOps(synced, sent);
+  if (!ops.length) return;
+  if (!auth || !synced) { toast('保存するにはログインが必要です'); if (synced) state = clone(synced); rerender(true); return; }
+  pending = true;
+  try {
+    const d = await apiPost({ a: 'ops', role: auth.role, team: auth.team, pass: auth.pass, ops });
+    const during = diffOps(sent, JSON.parse(JSON.stringify(state)));  // 送っている間に変えた分
+    if (d.state) { adopt(d.state, d.rev); if (during.length) { state = applyOps(state, during); again = true; } }
+    if (!d.ok) toast(d.error || '保存できませんでした');
+    netErr = false; rerender(true);
+  } catch (e) {
+    netErr = true; toast('通信できませんでした。自動でもう一度送ります'); setTimeout(pushOps, 3000);
+  }
+  pending = false; updateNav();
+  if (again) { again = false; pushOps(); }
+}
+async function pull() {
+  if (!REMOTE || pending) return;
+  try {
+    const r = await fetch(`${CONFIG.api}?a=state&rev=${serverRev}&t=${Date.now()}`); const d = await r.json();
+    netErr = false;
+    if (d.ok && d.rev !== serverRev && 'state' in d) {
+      if (synced && diffOps(synced, JSON.parse(JSON.stringify(state))).length) { pushOps(); return; }  // 未送信の変更が先
+      adopt(d.state, d.rev); rerender(true);
+    }
+  } catch (e) { netErr = true; }
+  updateNav();
+}
+// 読み込みの間隔：運営（管理・演出）2秒、チーム登録5秒、観戦10秒（大人数で開くのでゆっくり）
+function pollLoop() { pull().finally(() => setTimeout(pollLoop, { admin: 2000, present: 2000, register: 5000 }[mode()] || 10000)); }
+
+function save() {
+  if (REMOTE) { pushOps(); return; }
+  state.rev = (state.rev || 0) + 1;
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  try { bc && bc.postMessage(JSON.stringify(state)); } catch (e) {}
+}
+function onRemote(raw) {
+  try { const s = JSON.parse(raw); if ((s.rev || 0) <= (state.rev || 0)) return; state = normalize(Object.assign(blankState(), s)); } catch (e) { return; }
+  rerender(true);
+}
+if (!REMOTE) {
+  window.addEventListener('storage', e => { if (e.key === KEY && e.newValue) onRemote(e.newValue); });
+  if (bc) bc.onmessage = e => onRemote(e.data);
+}
+
+/* =====================================================================
+   共通ヘルパー
+   ===================================================================== */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function timg(t, cls = '') {
+  return `<div class="timg ${cls}" style="--tc:${t.color}"><img src="${CONFIG.assets.teamImage(t.id)}" alt="" onerror="this.parentNode.classList.add('noimg');this.remove()"><span class="fb">${esc(t.name[0])}</span></div>`;
+}
+function toast(msg) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = msg; document.body.appendChild(d); setTimeout(() => d.remove(), 2300); }
+
+// 音声：ファイルがなければ何もしない
+let muted = false;
+const audioCache = {};
+function play(src, vol = 1) {
+  if (muted || !src) return;
+  try {
+    let a = audioCache[src];
+    if (a === false) return;
+    if (!a) { a = new Audio(src); a.addEventListener('error', () => { audioCache[src] = false; }); audioCache[src] = a; }
+    a.currentTime = 0; a.volume = vol; a.play().catch(() => {});
+  } catch (e) {}
+}
+
+/* =====================================================================
+   得点計算
+   ===================================================================== */
+// 人間玉入れの試合（第1試合の1コート・2コート → 第2試合 … の順）
+const MATCHES = [];
+for (let k = 0; k < 4; k++) EV.kehai.courts.forEach((c, ci) => { const [L, R] = c.matches[k];
+  MATCHES.push({ id: `C${ci + 1}-${k + 1}`, round: `第${k + 1}試合`, court: c.name, label: `${c.name} 第${k + 1}試合`, L: () => L, R: () => R }); });
+const MDEF = Object.fromEntries(MATCHES.map(m => [m.id, m]));
+// 結果 state.results.kehai[id] = { a: 左の玉数, b: 右の玉数, tb: 'L'|'R'|'D'（同数のときの判定） }
+function match(id) {
+  const d = MDEF[id] || MATCHES[0];
+  const L = d.L(), R = d.R(), r = state.results.kehai[d.id] || {};
+  const has = v => v !== undefined && v !== null && v !== '';
+  const lw = has(r.a) ? Number(r.a) : null, rw = has(r.b) ? Number(r.b) : null;
+  let side = null;
+  if (lw !== null && rw !== null) side = lw > rw ? 'L' : rw > lw ? 'R' : (r.tb || 'D');
+  const tied = lw !== null && lw === rw;
+  return { id: d.id, def: d, L, R, battles: [side], lw: lw ?? 0, rw: rw ?? 0, done: !!side, side, tied, ready: true,
+    winner: side === 'L' ? L : side === 'R' ? R : null, loser: side === 'L' ? R : side === 'R' ? L : null };
+}
+function nextMatchId() { const m = MATCHES.find(d => !match(d.id).done); return m ? m.id : MATCHES[MATCHES.length - 1].id; }
+
+function placePoints(order, table) { const p = {}; order.forEach((id, i) => { p[id] = (p[id] || 0) + (table[i] || 0); }); return p; }
+function eventPoints() {
+  const out = {}; for (const t of CONFIG.teams) out[t.id] = { kariru: 0, kehai: 0, quiz: 0, relay: 0, radio: 0 };
+  state.results.kariru.forEach(order => { const p = placePoints(order, EV.kariru.points); for (const id in p) out[id].kariru += p[id]; });
+  for (const id in state.results.kariruBonus) if (out[id] && state.results.kariruBonus[id]) out[id].kariru += EV.kariru.bonus;
+  for (const id in state.results.radio) if (out[id]) out[id].radio = Math.max(0, Math.min(EV.radio.max, Number(state.results.radio[id]) || 0));
+  const rp = placePoints(state.results.relay, EV.relay.points); for (const id in rp) out[id].relay += rp[id];
+  for (const id in state.results.quiz) if (out[id]) out[id].quiz = Math.max(0, Math.min(EV.quiz.max, Number(state.results.quiz[id]) || 0));
+  const kp = EV.kehai.points;
+  MATCHES.forEach(d => { const m = match(d.id); if (!m.done) return;
+    if (m.side === 'D') { out[m.L].kehai += kp.draw; out[m.R].kehai += kp.draw; }
+    else { out[m.winner].kehai += kp.win; out[m.loser].kehai += kp.lose; } });
+  for (const id in out) out[id].total = out[id].kariru + out[id].kehai + out[id].quiz + out[id].relay + out[id].radio;
+  return out;
+}
+function ranking(ev = 'total') {
+  const pts = eventPoints();
+  const list = CONFIG.teams.map(t => ({ t, pt: pts[t.id][ev] })).sort((a, b) => b.pt - a.pt);
+  list.forEach((r, i) => { r.rank = i > 0 && r.pt === list[i - 1].pt ? list[i - 1].rank : i + 1; });
+  return list;
+}
+const EVLABEL = { total: '総合順位', radio: EV.radio.name, kehai: EV.kehai.name, kariru: EV.kariru.name, relay: EV.relay.name, quiz: EV.quiz.name };
+
+/* =====================================================================
+   画面切替
+   ===================================================================== */
+function mode() { const h = location.hash.slice(1); return ['register', 'admin', 'present', 'viewer'].includes(h) ? h : 'register'; }
+function rerender(remote = false) {
+  const m = mode();
+  document.querySelectorAll('#modebar a').forEach(a => a.classList.toggle('on', a.dataset.mode === m));
+  document.body.classList.toggle('presenting', m === 'present');
+  if (m !== 'present') teardownPresent();
+  // 入力中の画面は、他タブからの更新で描き直さない（入力が消えるため）
+  const ae = document.activeElement;
+  if (remote && (m === 'register' || m === 'admin') && ae && ae.matches('input,textarea,select') && ae.closest('#app')) return;
+  if (!loaded) { $('#app').innerHTML = `<div class="wrap narrow"><p class="muted">${netErr ? 'データ置き場につながりません。通信を確認してください。' : '読み込み中…'}</p></div>`; return; }
+  if ((m === 'admin' || m === 'present') && !isStaff()) { renderStaffGate(); return; }
+  ({ register: renderRegister, admin: renderAdmin, present: renderPresent, viewer: renderViewer })[m]();
+}
+/* 運営パスの入力（共有モードのとき、管理・演出の画面で使う） */
+function renderStaffGate() {
+  teardownPresent(); document.body.classList.remove('presenting');
+  $('#app').innerHTML = `<div class="wrap narrow stack"><div><div class="eyebrow">STAFF</div><h1>運営ログイン</h1>
+    <p class="muted small">管理・結果入力・演出は運営用です。配られた運営パスを入力してください。</p></div>
+    <form id="staffForm" class="stack"><label class="fld">運営パス<input type="password" id="spass" autocomplete="off" inputmode="numeric"></label>
+    <button class="btn primary" type="submit">入る</button><p class="small" id="smsg"></p></form></div>`;
+  $('#staffForm').onsubmit = async e => {
+    e.preventDefault(); const pass = $('#spass').value.trim(); $('#smsg').textContent = '確認中…';
+    try { const d = await apiPost({ a: 'staffLogin', pass }); if (d.ok) { setAuth({ role: 'staff', pass }); rerender(); } else { $('#smsg').textContent = '運営パスが違います'; } }
+    catch (x) { $('#smsg').textContent = '通信できませんでした'; }
+  };
+}
+function updateNav() {
+  const staff = isStaff();
+  document.querySelectorAll('#modebar a[data-mode="admin"],#modebar a[data-mode="present"],#resetBtn').forEach(el => { el.hidden = REMOTE && !staff; });
+  const st = $('#netState'); if (st) st.textContent = !REMOTE ? 'デモ（このブラウザ内に保存）' : netErr ? '⚠ 通信できません' : pending ? '保存中…' : staff ? '運営としてログイン中' : '';
+  const lo = $('#staffOut'); if (lo) lo.hidden = !(REMOTE && auth);
+}
+window.addEventListener('hashchange', () => rerender());
+
+const resetBtn = $('#resetBtn');
+resetBtn.addEventListener('click', () => {
+  if (resetBtn.dataset.armed) { state = blankState(); state.rev = Date.now(); save(); delete resetBtn.dataset.armed; resetBtn.textContent = 'データを初期化'; rerender(); toast('初期化しました'); }
+  else { resetBtn.dataset.armed = '1'; resetBtn.textContent = 'もう一度押すと全データを消去'; setTimeout(() => { delete resetBtn.dataset.armed; resetBtn.textContent = 'データを初期化'; }, 3000); }
+});
+
+/* =====================================================================
+   1. チーム登録画面（団長用・スマホ想定）
+   ===================================================================== */
+let session = null;        // ログイン中のチームID
+let pickTeam = null;
+function renderRegister() {
+  const app = $('#app');
+  if (!session && REMOTE && auth && auth.role === 'team') session = auth.team;  // 前回ログインしたチームのまま
+  if (!session) {
+    app.innerHTML = `<div class="wrap narrow stack">
+      <div><div class="eyebrow">ENTRY</div><h1>出場者登録</h1>
+      <p class="muted small">団長だけが使う画面です。自分のチームを選び、配られたパスコードを入力してください。</p></div>
+      <div class="teampick">${CONFIG.teams.map(t => `<button type="button" data-t="${t.id}" class="${pickTeam === t.id ? 'sel' : ''}" style="--tc:${t.color}">${timg(t)}${esc(t.name)}</button>`).join('')}</div>
+      <form id="loginForm" class="stack">
+        <label class="fld">パスコード<input type="password" id="pass" inputmode="numeric" autocomplete="off" placeholder="4桁"></label>
+        <button class="btn primary" type="submit" ${pickTeam ? '' : 'disabled'}>入る</button>
+        <p class="muted small" id="loginMsg">${REMOTE ? '入力した内容は自動で保存され、運営に届きます。' : 'デモ用パスコード：マリオ 0001 ／ ピカチュウ 0002 … リンク 0008'}</p>
+      </form></div>`;
+    app.querySelectorAll('.teampick button').forEach(b => b.onclick = () => { pickTeam = b.dataset.t; renderRegister(); $('#pass').focus(); });
+    $('#loginForm').onsubmit = async e => {
+      e.preventDefault();
+      const pass = $('#pass').value.trim(), bad = () => { $('#loginMsg').textContent = 'パスコードが違います。運営から配られた4桁を確認してください。'; $('#loginMsg').style.color = 'var(--red)'; };
+      if (!TEAM[pickTeam]) return;
+      if (!REMOTE) { if (pass === TEAM[pickTeam].pass) { session = pickTeam; renderRegister(); window.scrollTo(0, 0); } else bad(); return; }
+      $('#loginMsg').textContent = '確認中…';
+      try { const d = await apiPost({ a: 'login', team: pickTeam, pass }); if (d.ok) { if (!isStaff()) setAuth({ role: 'team', team: pickTeam, pass }); session = pickTeam; renderRegister(); window.scrollTo(0, 0); } else bad(); }
+      catch (x) { $('#loginMsg').textContent = '通信できませんでした。電波のよい所でもう一度'; }
+    };
+    return;
+  }
+  const t = TEAM[session], en = state.entries[t.id], mem = state.members[t.id], ro = state.locked;
+  const opts = sel => `<option value="">— 選択 —</option>` + mem.map(n => `<option ${n === sel ? 'selected' : ''}>${esc(n)}</option>`).join('');
+  const sub = state.submitted[t.id];
+  app.innerHTML = `<div class="wrap narrow stack">
+    <div class="teamhead" style="--tc:${t.color}">${timg(t)}<div><div class="eyebrow" style="color:#fff">TEAM</div><h1>${esc(t.name)}チーム</h1>
+      <div class="small">${sub ? `<span class="pill ok">提出済み ${new Date(sub).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>` : '<span class="pill ng">未提出</span>'} ${ro ? '<span class="pill warn">締切済み・編集不可</span>' : ''}</div></div></div>
+
+    <section class="panel stack"><div class="evhead"><h2>メンバー名簿</h2><span class="muted small">${mem.length}人</span></div>
+      <label class="fld">1行に1人ずつ入力（最大${CONFIG.maxMembers}人）。下の各種目の選択肢になります。<textarea id="roster" rows="6" ${ro ? 'disabled' : ''} placeholder="山田 太郎&#10;佐藤 花子">${esc(mem.join('\n'))}</textarea></label>
+      ${ro ? '' : '<button class="btn sm" type="button" id="rosterSave">名簿を反映</button>'}</section>
+
+    <section class="panel stack"><div class="evhead"><h2>${EV.kariru.name}</h2><span class="muted small">5分 × ${EV.kariru.rounds}回。各回に1人</span></div>
+      ${en.kariru.map((v, i) => `<div class="slot"><span class="lab">第${i + 1}回</span><select id="kr${i}" data-ev="kariru" data-i="${i}" ${ro ? 'disabled' : ''}>${opts(v)}</select></div>`).join('')}</section>
+
+    <section class="panel stack"><div class="evhead"><h2>${EV.kehai.name}</h2><span class="muted small">2チームずつのトーナメント。${EV.kehai.slot}を${EV.kehai.battles}人決める（球が当たっても平気な人）</span></div>
+      ${en.kehai.map((v, i) => `<div class="slot"><span class="lab">${EV.kehai.battles > 1 ? `${EV.kehai.slot}${i + 1}` : EV.kehai.slot}</span><select id="kh${i}" data-ev="kehai" data-i="${i}" ${ro ? 'disabled' : ''}>${opts(v)}</select></div>`).join('')}</section>
+
+    <section class="panel stack"><div class="evhead"><h2>${EV.relay.name}</h2><span class="muted small">全${EV.relay.legs.length}走・${EV.relay.legs.reduce((a, l) => a + l.people, 0)}人</span></div>
+      ${EV.relay.legs.map((l, i) => `<div class="slot"><span class="lab">${i + 1}走者<small>${esc(l.task)}</small></span>
+        ${l.people > 1 ? `<div class="two">${en.relay[i].map((v, j) => `<select id="rl${i}_${j}" data-ev="relay" data-i="${i}" data-j="${j}" ${ro ? 'disabled' : ''}>${opts(v)}</select>`).join('')}</div>`
+          : `<select id="rl${i}_0" data-ev="relay" data-i="${i}" data-j="0" ${ro ? 'disabled' : ''}>${opts(en.relay[i][0])}</select>`}
+        <p class="legdesc">${esc(l.desc)}${l.baton ? `<span class="baton">次へ渡す：${esc(l.baton)}</span>` : ''}</p></div>`).join('')}</section>
+
+    <section class="panel"><div class="evhead"><h2>${EV.quiz.name}</h2><span class="muted small">事前登録なし（当日チーム全員で解答）</span></div></section>
+
+    <div id="checks"></div>
+    <div class="row">${ro ? '' : `<button class="btn primary" type="button" id="submitBtn">${sub ? '内容を更新して再提出' : 'この内容で提出'}</button>`}
+      <button class="btn" type="button" id="logout">ログアウト</button></div>
+  </div>`;
+  if (!ro) {
+    $('#rosterSave').onclick = () => {
+      const all = [...new Set($('#roster').value.split('\n').map(s => s.trim()).filter(Boolean))];
+      const names = all.slice(0, CONFIG.maxMembers);
+      if (all.length > names.length) toast(`名簿は${CONFIG.maxMembers}人までです。${CONFIG.maxMembers + 1}人目以降は入れていません`);
+      state.members[t.id] = names;
+      // 名簿から消えた人は割り当てから外す
+      const keep = v => names.includes(v) ? v : '';
+      en.kariru = en.kariru.map(keep); en.kehai = en.kehai.map(keep); en.relay = en.relay.map(a => a.map(keep));
+      save(); renderRegister(); toast('名簿を反映しました');
+    };
+    $('#app').querySelectorAll('select[data-ev]').forEach(s => s.onchange = () => {
+      const ev = s.dataset.ev, i = +s.dataset.i;
+      if (ev === 'relay') en.relay[i][+s.dataset.j] = s.value; else en[ev][i] = s.value;
+      save(); renderChecks();
+    });
+    $('#submitBtn').onclick = () => {
+      const c = checks(t.id);
+      if (c.empty > 0 && !$('#submitBtn').dataset.armed) {
+        $('#submitBtn').dataset.armed = '1'; $('#submitBtn').textContent = `未入力が${c.empty}枠あります。このまま提出する場合はもう一度押す`; return;
+      }
+      state.submitted[t.id] = Date.now(); save(); renderRegister(); toast('提出しました');
+    };
+  }
+  $('#logout').onclick = () => { session = null; pickTeam = null; if (auth && auth.role === 'team') setAuth(null); renderRegister(); };
+  renderChecks();
+}
+function checks(id) {
+  const en = state.entries[id];
+  const all = [...en.kariru, ...en.kehai, ...en.relay.flat()];
+  const empty = all.filter(v => !v).length;
+  const relayNames = en.relay.flat().filter(Boolean);
+  const dupRelay = [...new Set(relayNames.filter((n, i) => relayNames.indexOf(n) !== i))];
+  const krNames = en.kariru.filter(Boolean);
+  const dupKr = [...new Set(krNames.filter((n, i) => krNames.indexOf(n) !== i))];
+  return { empty, total: all.length, dupRelay, dupKr };
+}
+function renderChecks() {
+  if (!session) return;
+  const c = checks(session), box = $('#checks');
+  const msgs = [];
+  if (c.empty) msgs.push(`未入力：${c.empty} / ${c.total} 枠`);
+  if (c.dupRelay.length) msgs.push(`リレーで複数回出る人：${c.dupRelay.join('、')}（事情があればOK）`);
+  if (c.dupKr.length) msgs.push(`借り人競争で複数回出る人：${c.dupKr.join('、')}`);
+  box.innerHTML = msgs.length ? `<div class="warnbox">${msgs.map(esc).join('<br>')}</div>` : `<div class="warnbox" style="border-color:var(--ok);background:rgba(61,220,151,.08)">全枠入力済みです。</div>`;
+  const dup = new Set([...c.dupRelay]);
+  $('#app').querySelectorAll('select[data-ev="relay"]').forEach(s => s.classList.toggle('dup', dup.has(s.value)));
+}
+
+/* =====================================================================
+   2. 管理画面（運営用）
+   ===================================================================== */
+let adminTab = 'status', krRound = 0, openTeam = null;
+function renderAdmin() {
+  const tabs = { status: '提出状況', results: '結果入力', score: '得点', control: '演出操作' };
+  $('#app').innerHTML = `<div class="wrap">
+    <div class="row" style="justify-content:space-between;margin-bottom:12px"><div><div class="eyebrow">ADMIN</div><h1>管理画面</h1></div>
+      ${REMOTE ? '' : '<button class="btn sm" type="button" id="sample">サンプルデータを入れる</button>'}</div>
+    <div class="admintabs" role="tablist">${Object.entries(tabs).map(([k, v]) => `<button type="button" role="tab" data-tab="${k}" class="${adminTab === k ? 'on' : ''}">${v}</button>`).join('')}</div>
+    <div id="atab"></div></div>`;
+  $('#app').querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { adminTab = b.dataset.tab; renderAdmin(); });
+  if ($('#sample')) $('#sample').onclick = () => { fillSample(); save(); renderAdmin(); toast('サンプルデータを入れました'); };
+  ({ status: adminStatus, results: adminResults, score: adminScore, control: adminControl })[adminTab]();
+}
+
+function adminStatus() {
+  const rows = CONFIG.teams.map(t => {
+    const en = state.entries[t.id], c = checks(t.id), sub = state.submitted[t.id];
+    const f = a => `${a.filter(Boolean).length}/${a.length}`;
+    return `<tr><td><span class="tdot" style="--tc:${t.color}"></span><b>${esc(t.name)}</b></td>
+      <td>${sub ? '<span class="pill ok">提出済み</span>' : '<span class="pill ng">未提出</span>'}</td>
+      <td class="num">${state.members[t.id].length}</td><td class="num">${f(en.kariru)}</td><td class="num">${f(en.kehai)}</td><td class="num">${f(en.relay.flat())}</td>
+      <td>${c.dupRelay.length ? '<span class="pill warn">リレー重複</span>' : ''}</td>
+      <td><button class="btn sm" type="button" data-open="${t.id}">${openTeam === t.id ? '閉じる' : '中身'}</button></td></tr>
+      ${openTeam === t.id ? `<tr><td colspan="8" style="white-space:normal">${entryDetail(t.id)}</td></tr>` : ''}`;
+  }).join('');
+  const done = CONFIG.teams.filter(t => state.submitted[t.id]).length;
+  $('#atab').innerHTML = `<div class="stack">
+    <div class="row"><span class="score num">${done} / ${CONFIG.teams.length}</span><span class="muted">チーム提出済み</span><span class="sp" style="flex:1"></span>
+      <button class="btn ${state.locked ? '' : 'danger'}" type="button" id="lock">${state.locked ? '締切を解除する' : '登録を締め切る'}</button>
+      <button class="btn" type="button" id="csv">CSVで書き出す</button></div>
+    <div class="tscroll panel" style="padding:0"><table class="t"><thead><tr><th>チーム</th><th>状態</th><th>名簿</th><th>${EV.kariru.name}</th><th>${EV.kehai.name}</th><th>${EV.relay.name}</th><th>注意</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  $('#atab').querySelectorAll('[data-open]').forEach(b => b.onclick = () => { openTeam = openTeam === b.dataset.open ? null : b.dataset.open; adminStatus(); });
+  $('#lock').onclick = () => { state.locked = !state.locked; save(); adminStatus(); toast(state.locked ? '締め切りました' : '締切を解除しました'); };
+  $('#csv').onclick = exportCSV;
+}
+function entryDetail(id) {
+  const en = state.entries[id], d = v => v ? esc(v) : '<span class="muted">—</span>';
+  return `<div class="grid2 small">
+    <div><b>${EV.kariru.name}</b><br>${en.kariru.map((v, i) => `第${i + 1}回 ${d(v)}`).join('<br>')}</div>
+    <div><b>${EV.kehai.name}</b><br>${en.kehai.map((v, i) => `${EV.kehai.slot} ${d(v)}`).join('<br>')}<br><br>
+    <b>${EV.relay.name}</b><br>${en.relay.map((a, i) => `${i + 1}走 ${a.map(d).join(' ＋ ')}`).join('<br>')}</div></div>`;
+}
+function exportCSV() {
+  const rows = [['チーム', '種目', '枠', '氏名']];
+  for (const t of CONFIG.teams) {
+    const en = state.entries[t.id];
+    en.kariru.forEach((v, i) => rows.push([t.name, EV.kariru.name, `第${i + 1}回`, v]));
+    en.kehai.forEach((v, i) => rows.push([t.name, EV.kehai.name, EV.kehai.slot, v]));
+    en.relay.forEach((a, i) => a.forEach((v, j) => rows.push([t.name, EV.relay.name, `${i + 1}走者${a.length > 1 ? '-' + (j + 1) : ''}`, v])));
+  }
+  const csv = '﻿' + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'TKO2026_出場者.csv'; a.click();
+}
+
+function orderPicker(order, onChange, label) {
+  const pts = label.points;
+  return `<div class="stack">
+    <div class="orderpick">${CONFIG.teams.map(t => { const p = order.indexOf(t.id);
+      return `<button type="button" data-pick="${t.id}" class="${p >= 0 ? 'done' : ''}" style="--tc:${t.color}">${esc(t.name)}${p >= 0 ? `<span class="pl">${p + 1}位</span>` : ''}</button>`; }).join('')}</div>
+    <div class="small">${order.length ? order.map((id, i) => `<b>${i + 1}位</b> ${esc(TEAM[id].name)} <span class="muted">(${pts[i] || 0}点)</span>`).join('　') : '<span class="muted">ゴールした順にチームを押してください。不該当のチームは押さずに飛ばします（繰り上げ）。</span>'}</div>
+    <div class="row"><button class="btn sm" type="button" data-undo>1つ戻す</button><button class="btn sm" type="button" data-clear>クリア</button></div></div>`;
+}
+function bindOrder(root, order, commit) {
+  root.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => { if (!order.includes(b.dataset.pick)) { order.push(b.dataset.pick); commit(); } });
+  root.querySelector('[data-undo]').onclick = () => { order.pop(); commit(); };
+  root.querySelector('[data-clear]').onclick = () => { order.length = 0; commit(); };
+}
+
+function adminResults() {
+  const krOrder = state.results.kariru[krRound];
+  $('#atab').innerHTML = `<div class="stack">
+    <section class="panel stack"><div class="evhead"><h2>${EV.kariru.name}</h2>
+      <div class="roundtabs">${state.results.kariru.map((o, i) => `<button type="button" data-r="${i}" class="${i === krRound ? 'on' : ''} ${o.length ? 'full' : ''}">第${i + 1}回</button>`).join('')}</div></div>
+      <div id="krBox">${orderPicker(krOrder, null, EV.kariru)}</div>
+      <div class="row small"><span class="muted">全員借りられた（+${EV.kariru.bonus}点）：</span>${CONFIG.teams.map(t => `<label style="display:inline-flex;gap:4px;align-items:center"><input type="checkbox" data-krb="${t.id}" ${state.results.kariruBonus[t.id] ? 'checked' : ''}><span class="tdot" style="--tc:${t.color}"></span>${esc(t.name)}</label>`).join('')}</div>
+      <p class="muted small">第${krRound + 1}回の出走者：${CONFIG.teams.map(t => `${esc(t.name)} ${esc(state.entries[t.id].kariru[krRound] || '—')}`).join(' ／ ')}</p></section>
+
+    <section class="panel stack"><div class="evhead"><h2>${EV.kehai.name}<span class="tag-prov">得点は仮</span></h2><span class="muted small">両チームの玉数を入れると、多いほうが勝ち。同数のときは勝者（または引き分け）を選ぶ</span></div>
+      <div class="grid2">${EV.kehai.courts.map((c, ci) => `<div class="stack"><b>${esc(c.name)}</b>${MATCHES.filter(d => d.court === c.name).map(d => matchEditor(match(d.id))).join('')}</div>`).join('')}</div></section>
+
+    <section class="panel stack"><div class="evhead"><h2>${EV.relay.name}<span class="tag-prov">得点は仮</span></h2></div>
+      <div id="rlBox">${orderPicker(state.results.relay, null, EV.relay)}</div></section>
+
+    <section class="panel stack"><div class="evhead"><h2>${EV.radio.name}<span class="tag-prov">得点は仮</span></h2><span class="muted small">一番よかったチームに点を入れる（0〜${EV.radio.max}点）</span></div>
+      <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr))">${CONFIG.teams.map(t => `<label class="fld"><span><span class="tdot" style="--tc:${t.color}"></span>${esc(t.name)}</span>
+        <input type="number" min="0" max="${EV.radio.max}" data-rd="${t.id}" value="${state.results.radio[t.id] ?? ''}" class="num"></label>`).join('')}</div></section>
+
+    <section class="panel stack"><div class="evhead"><h2>${EV.quiz.name}</h2><span class="muted small">0〜${EV.quiz.max}点</span></div>
+      <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr))">${CONFIG.teams.map(t => `<label class="fld"><span><span class="tdot" style="--tc:${t.color}"></span>${esc(t.name)}</span>
+        <input type="number" min="0" max="${EV.quiz.max}" id="qz_${t.id}" data-qz="${t.id}" value="${state.results.quiz[t.id] ?? ''}" class="num"></label>`).join('')}</div>
+      <div class="row" style="border-top:1px dashed var(--line);padding-top:12px">
+        <label class="fld" style="flex:1;min-width:220px">クイズアプリのアドレス<input type="text" id="quizUrl" value="${esc(quizUrl())}"></label>
+        <button class="btn" type="button" id="quizPull" style="align-self:flex-end">クイズアプリから取り込む</button></div>
+      <details class="small"><summary class="muted">取り込めないとき（貼り付けで取り込む）</summary>
+        <div class="stack" style="margin-top:8px"><span class="muted">クイズアプリの運営画面で「集計サイト用にコピー」を押し、ここに貼り付けてください。</span>
+        <textarea id="quizPaste" rows="2" placeholder='{"event":"quiz","scores":{...}}'></textarea>
+        <div><button class="btn sm" type="button" id="quizPasteBtn">貼り付けた内容で取り込む</button></div></div></details></section>
+  </div>`;
+  const at = $('#atab');
+  at.querySelectorAll('[data-r]').forEach(b => b.onclick = () => { krRound = +b.dataset.r; adminResults(); });
+  bindOrder($('#krBox'), krOrder, () => { save(); adminResults(); });
+  bindOrder($('#rlBox'), state.results.relay, () => { save(); adminResults(); });
+  at.querySelectorAll('[data-rd]').forEach(i => i.onchange = () => { state.results.radio[i.dataset.rd] = i.value === '' ? undefined : Number(i.value); save(); });
+  at.querySelectorAll('[data-krb]').forEach(i => i.onchange = () => { state.results.kariruBonus[i.dataset.krb] = i.checked; save(); });
+  at.querySelectorAll('[data-qz]').forEach(i => i.onchange = () => { state.results.quiz[i.dataset.qz] = i.value === '' ? undefined : Number(i.value); save(); });
+  $('#quizUrl').onchange = e => { try { localStorage.setItem('tko2026-quiz-url', e.target.value.trim()); } catch (x) {} };
+  $('#quizPull').onclick = async () => {
+    const url = $('#quizUrl').value.trim().replace(/\/+$/, '').replace(/#.*$/, '');
+    try { localStorage.setItem('tko2026-quiz-url', url); } catch (x) {}
+    try { const r = await fetch(url + '/api/results.json', { cache: 'no-store' }); importQuiz(await r.json()); }
+    catch (e) { toast('クイズアプリにつながりません。アドレスを確認するか、貼り付けで取り込んでください'); }
+  };
+  $('#quizPasteBtn').onclick = () => { try { importQuiz(JSON.parse($('#quizPaste').value)); } catch (e) { toast('貼り付けた内容が読み取れません'); } };
+  at.querySelectorAll('[data-ball]').forEach(i => i.onchange = () => {
+    const [mid, side] = i.dataset.ball.split(':'); const r = state.results.kehai[mid] = state.results.kehai[mid] || {};
+    r[side] = i.value === '' ? undefined : Math.max(0, Number(i.value)); r.tb = undefined; save(); adminResults();
+  });
+  at.querySelectorAll('[data-tb]').forEach(b => b.onclick = () => {
+    const [mid, v] = b.dataset.tb.split(':'); state.results.kehai[mid].tb = v; save(); adminResults();
+  });
+}
+function matchEditor(m) {
+  const L = TEAM[m.L], R = TEAM[m.R], r = state.results.kehai[m.id] || {};
+  const win = id => m.winner === id ? 'color:var(--gold);font-weight:900;' : '';
+  return `<div class="match"><div class="mh"><b>${m.def.round}</b>${m.done ? `<span class="small">${m.side === 'D' ? '引き分け' : `勝者：<b style="color:var(--gold)">${esc(TEAM[m.winner].name)}</b>`}</span>` : '<span class="muted small">未入力</span>'}</div>
+    <div class="row" style="flex-wrap:nowrap;gap:8px;align-items:center">
+      <span style="${win(m.L)}flex:1"><span class="tdot" style="--tc:${L.color}"></span>${esc(L.name)}</span>
+      <input type="number" min="0" class="num" style="width:70px" data-ball="${m.id}:a" value="${r.a ?? ''}" aria-label="${esc(L.name)}の玉数">
+      <span class="muted">vs</span>
+      <input type="number" min="0" class="num" style="width:70px" data-ball="${m.id}:b" value="${r.b ?? ''}" aria-label="${esc(R.name)}の玉数">
+      <span style="${win(m.R)}flex:1;text-align:right">${esc(R.name)}<span class="tdot" style="--tc:${R.color};margin:0 0 0 6px"></span></span></div>
+    ${m.tied ? `<div class="warnbox" style="margin-top:8px">同数です。勝者を選んでください。
+      <div class="row" style="margin-top:6px"><button class="btn sm ${r.tb === 'L' ? 'on' : ''}" type="button" data-tb="${m.id}:L">${esc(L.name)}</button><button class="btn sm ${!r.tb || r.tb === 'D' ? 'on' : ''}" type="button" data-tb="${m.id}:D">引き分け</button><button class="btn sm ${r.tb === 'R' ? 'on' : ''}" type="button" data-tb="${m.id}:R">${esc(R.name)}</button></div></div>` : ''}</div>`;
+}
+
+/* クイズアプリ（quiz/server.py）の結果を取り込む */
+function quizUrl() { try { return localStorage.getItem('tko2026-quiz-url') || 'http://localhost:8000'; } catch (e) { return 'http://localhost:8000'; } }
+function importQuiz(d) {
+  if (!d || d.event !== 'quiz' || !d.scores) throw new Error('bad');
+  let n = 0;
+  for (const t of CONFIG.teams) if (t.id in d.scores) { state.results.quiz[t.id] = Math.max(0, Math.min(EV.quiz.max, Number(d.scores[t.id]) || 0)); n++; }
+  save(); adminResults(); toast(`クイズの得点を取り込みました（${n}チーム）`);
+}
+function adminScore() {
+  const pts = eventPoints(), rk = ranking();
+  $('#atab').innerHTML = `<div class="tscroll panel" style="padding:0"><table class="t">
+    <thead><tr><th>順位</th><th>チーム</th><th>${EV.radio.name}<span class="tag-prov">仮</span></th><th>${EV.kehai.name}<span class="tag-prov">仮</span></th><th>${EV.kariru.name}</th><th>${EV.relay.name}<span class="tag-prov">仮</span></th><th>${EV.quiz.name}</th><th>合計</th></tr></thead>
+    <tbody>${rk.map(r => { const p = pts[r.t.id]; return `<tr><td class="num"><b>${r.rank}</b></td><td><span class="tdot" style="--tc:${r.t.color}"></span>${esc(r.t.name)}</td>
+      <td class="num">${p.radio}</td><td class="num">${p.kehai}</td><td class="num">${p.kariru}</td><td class="num">${p.relay}</td><td class="num">${p.quiz}</td><td class="num"><b>${p.total}</b></td></tr>`; }).join('')}</tbody></table></div>
+    <p class="muted small" style="margin-top:10px">${EV.kehai.name}の仮得点：1試合ごとに 勝ち ${EV.kehai.points.win} ／ 引き分け ${EV.kehai.points.draw} ／ 負け ${EV.kehai.points.lose}（各チーム2試合）。${EV.relay.name}は借り人競争と同じ配点を仮置き。${EV.radio.name}は最大${EV.radio.max}点を仮置き。借り人競争は全員借りられたチームに+${EV.kariru.bonus}点。</p>`;
+}
+
+function adminControl() {
+  const p = state.present;
+  const sc = [['title', 'タイトル'], ['teams', 'チーム紹介'], ['bracket', '対戦表'], ['vs', 'VS（対戦カード）'], ['rank', '順位発表']];
+  const playable = MATCHES.map(d => match(d.id));
+  $('#atab').innerHTML = `<div class="stack">
+    <div class="warnbox">演出画面を別タブ（またはプロジェクター用の別ウィンドウ）で開くと、ここでの操作に合わせて切り替わります。演出側の画面を一度クリックしておくと音が鳴ります。
+      <div class="row" style="margin-top:8px"><a class="btn sm" href="#present" target="_blank" rel="noopener" style="text-decoration:none">演出画面を別タブで開く</a></div></div>
+    <section class="panel stack"><h2>場面</h2><div class="ctrlgrid">${sc.map(([k, v]) => `<button class="btn ${p.scene === k ? 'on' : ''}" type="button" data-sc="${k}">${v}</button>`).join('')}</div></section>
+    <section class="panel stack"><h2>進める</h2><div class="row"><button class="btn primary" type="button" id="stepNext">次へ（Space）</button><button class="btn" type="button" id="stepPrev">1つ戻す</button>
+      <span class="muted small">現在：${esc(sc.find(s => s[0] === p.scene)?.[1])} ／ ステップ ${p.step}</span></div>
+      <p class="muted small">チーム紹介：1チームずつ呼び込み ／ VS：対戦カードのカウントダウン ／ 順位発表：最下位から1チームずつ公開</p></section>
+    <section class="grid2">
+      <div class="panel stack"><h3>VSで表示する試合</h3><select id="ctlMatch">${playable.map(m => `<option value="${m.id}" ${(p.match || nextMatchId()) === m.id ? 'selected' : ''}>${m.def.label}：${esc(TEAM[m.L].name)} vs ${esc(TEAM[m.R].name)}${m.done ? '（終了）' : ''}</option>`).join('')}</select></div>
+      <div class="panel stack"><h3>順位発表の対象</h3><select id="ctlEvent">${Object.entries(EVLABEL).map(([k, v]) => `<option value="${k}" ${p.event === k ? 'selected' : ''}>${v}</option>`).join('')}</select></div>
+    </section></div>`;
+  const at = $('#atab');
+  at.querySelectorAll('[data-sc]').forEach(b => b.onclick = () => { setScene(b.dataset.sc); adminControl(); });
+  $('#stepNext').onclick = () => { stepBy(1); adminControl(); };
+  $('#stepPrev').onclick = () => { stepBy(-1); adminControl(); };
+  $('#ctlMatch').onchange = e => { state.present.match = e.target.value; if (p.scene === 'vs') { p.step = 0; p.nonce++; } save(); };
+  $('#ctlEvent').onchange = e => { state.present.event = e.target.value; if (p.scene === 'rank') { p.step = 0; p.nonce++; } save(); };
+}
+
+/* サンプルデータ（企画班へのデモ用） */
+function fillSample() {
+  const fam = ['佐藤', '鈴木', '高橋', '田中', '伊藤', '渡辺', '山本', '中村', '小林', '加藤', '吉田', '山田', '松本', '井上'];
+  CONFIG.teams.forEach((t, ti) => {
+    const names = Array.from({ length: 8 }, (_, i) => `${fam[(ti * 3 + i) % fam.length]} ${'ABCDEFGH'[i]}`);
+    state.members[t.id] = names;
+    state.entries[t.id] = { kariru: names.slice(0, 8), kehai: names.slice(1, 1 + EV.kehai.battles),
+      relay: EV.relay.legs.map((l, i) => l.people === 2 ? [names[i], names[(i + 1) % 8]] : [names[i < 5 ? i : (i + 1) % 8]]) };
+    if (ti !== 3) state.submitted[t.id] = Date.now() - ti * 3600e3;
+  });
+  const shuffle = a => a.map(v => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map(v => v[1]);
+  state.results.kariru = state.results.kariru.map((_, i) => i < 5 ? shuffle(CONFIG.teams.map(t => t.id)).slice(0, 7) : []);
+  CONFIG.teams.forEach(t => { state.results.quiz[t.id] = 40 + Math.round(Math.random() * 12) * 5; });
+  state.results.radio = { [CONFIG.teams[Math.floor(Math.random() * 8)].id]: EV.radio.max };
+  MATCHES.slice(0, 5).forEach(d => { state.results.kehai[d.id] = { a: Math.floor(Math.random() * 15), b: Math.floor(Math.random() * 15) }; });
+  state.present.match = MATCHES[5].id;
+}
+
+/* =====================================================================
+   3. 演出画面（プロジェクター用・1920×1080）
+   ===================================================================== */
+let P = null; // 演出画面の描画状態 { key, step, timers, seen }
+const seenDecided = new Set();
+function teardownPresent() { if (P) { P.timers.forEach(clearTimeout); window.removeEventListener('resize', fitStage); window.removeEventListener('keydown', presentKey); P = null; } }
+function later(fn, ms) { const id = setTimeout(fn, ms); P && P.timers.push(id); return id; }
+function fitStage() { const s = Math.min(innerWidth / 1920, innerHeight / 1080); const st = $('#stage'); if (st) st.style.transform = `translate(-50%,-50%) scale(${s})`; }
+
+function setScene(sc) { const p = state.present; p.scene = sc; p.step = 0; p.nonce++; if (sc === 'vs' && !p.match) p.match = nextMatchId(); save(); if (mode() === 'present') renderPresent(); }
+function maxStep() {
+  const p = state.present;
+  return { title: 1, teams: CONFIG.teams.length, bracket: 0, vs: EV.kehai.battles, rank: CONFIG.teams.length }[p.scene] ?? 0;
+}
+function stepBy(d) { const p = state.present; p.step = Math.max(0, Math.min(maxStep(), p.step + d)); save(); if (mode() === 'present') renderPresent(); }
+
+function presentKey(e) {
+  if (e.target.closest && e.target.closest('input,select,textarea')) return;
+  const map = { '1': 'title', '2': 'teams', '3': 'bracket', '4': 'vs', '5': 'rank' };
+  if (map[e.key]) { setScene(map[e.key]); }
+  else if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 'Enter') { e.preventDefault(); stepBy(1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'Backspace') { e.preventDefault(); stepBy(-1); }
+  else if (e.key === 'f' || e.key === 'F') { (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.())?.catch?.(() => {}); }
+  else if (e.key === 'm' || e.key === 'M') { muted = !muted; }
+  else if (e.key === 'Escape' && !document.fullscreenElement) { location.hash = '#admin'; }
+  showHint();
+}
+function showHint() { const h = $('#hint'); if (!h) return; h.classList.remove('off'); clearTimeout(showHint.t); showHint.t = setTimeout(() => h.classList.add('off'), 3500); }
+
+function renderPresent() {
+  const app = $('#app');
+  if (!P) {
+    app.innerHTML = `<div id="presentRoot"><div id="stage"><img class="bgimg" src="${CONFIG.assets.bg}" alt="" onerror="this.remove()"><div class="stripes"></div><div id="scene"></div>
+      <div class="hint" id="hint">Space：次へ ／ ← 戻る ／ 1〜5：場面 ／ F：全画面 ／ M：消音 ／ Esc：管理へ</div>
+      ${P_unlocked ? '' : '<div class="startgate" id="gate"><div>クリックで演出を開始<small>ブラウザの仕様で、一度クリックするまで音が鳴りません</small></div></div>'}</div></div>
+      <button class="exitbtn" type="button" onclick="location.hash='#admin'">管理画面へ</button>`;
+    P = { key: null, step: -1, timers: [] };
+    window.addEventListener('resize', fitStage); window.addEventListener('keydown', presentKey);
+    fitStage(); showHint();
+    const gate = $('#gate'); if (gate) gate.onclick = () => { P_unlocked = true; gate.remove(); play(CONFIG.assets.sfx.bgm, .35); };
+    $('#presentRoot').addEventListener('mousemove', showHint);
+  }
+  const p = state.present;
+  const key = `${p.scene}|${p.match}|${p.event}|${p.nonce}`;
+  const sceneEl = $('#scene');
+  if (key !== P.key) {
+    P.timers.forEach(clearTimeout); P.timers = [];
+    P.key = key; P.step = -1;
+    sceneEl.innerHTML = '';
+    ({ title: buildTitle, teams: buildTeams, bracket: buildBracket, vs: buildVS, rank: buildRank })[p.scene](sceneEl);
+  } else if (p.scene === 'bracket') { buildBracket(sceneEl); }
+  else if (p.scene === 'vs') { updateLineup(); }
+  applyStep(p.step);
+}
+let P_unlocked = false;
+
+function applyStep(step) {
+  const prev = P.step; P.step = step;
+  if (prev === step) return;
+  const live = prev !== -1 && step === prev + 1;   // 1つ進めたときだけ効果音・アニメーション
+  const sc = state.present.scene;
+  if (sc === 'title') stepTitle(step, live);
+  if (sc === 'teams') stepTeams(step, live);
+  if (sc === 'vs') stepVS(step, live);
+  if (sc === 'rank') stepRank(step, live, prev);
+}
+
+/* タイトル */
+function buildTitle(el) {
+  el.innerHTML = `<div class="scene sc-title" id="scTitle"><div class="slash"></div>
+    <div style="position:relative;display:flex;flex-direction:column;align-items:center">
+      <img class="logo" src="${CONFIG.assets.logo}" alt="" onload="document.getElementById('scTitle').classList.add('haslogo')" onerror="this.remove()">
+      <div class="tt">${esc(CONFIG.eventTitle)}</div><div class="st">${esc(CONFIG.eventSubtitle)}</div></div>
+    <div class="press">PRESS SPACE</div></div>`;
+}
+function stepTitle(step, live) {
+  const sc = $('#scTitle'); const old = sc.querySelector('video'); if (old) old.remove();
+  if (step === 1) {
+    const v = document.createElement('video'); v.src = CONFIG.assets.opening; v.autoplay = true; v.playsInline = true; v.muted = muted;
+    v.onerror = () => v.remove(); v.onended = () => { v.remove(); };
+    sc.appendChild(v); v.play?.().catch(() => {});
+  }
+}
+
+/* チーム紹介 */
+function buildTeams(el) {
+  el.innerHTML = `<div class="scene sc-teams" id="scTeams"><div class="band"><span class="en">ENTRY TEAMS</span><span class="ja">出場チーム</span></div>
+    <div class="cards">${CONFIG.teams.map((t, i) => `<div class="tcard" id="tc_${t.id}" style="--tc:${t.color};--i:${i}"><div class="bgc"></div><span class="no">${String(i + 1).padStart(2, '0')}</span>${timg(t)}<div class="plate">${esc(t.name)}</div></div>`).join('')}</div>
+    <div class="namecall" id="namecall"></div></div>`;
+}
+function stepTeams(step, live) {
+  const root = $('#scTeams');
+  root.classList.toggle('focusing', step > 0);
+  CONFIG.teams.forEach((t, i) => { const c = $('#tc_' + t.id); c.classList.toggle('focus', i === step - 1); c.classList.toggle('called', i < step - 1); });
+  const nc = $('#namecall'); nc.innerHTML = '';
+  if (step > 0 && live) {
+    const t = CONFIG.teams[step - 1];
+    play(CONFIG.assets.sfx.select, .8);
+    later(() => play(CONFIG.assets.voice(t.id)), 150);
+    nc.innerHTML = `<div class="nc" style="--tc:${t.color}"><span>${esc(t.name)}</span></div>`;
+  }
+}
+
+/* 対戦表（人間玉入れ：2コート×4試合） */
+function buildBracket(el) {
+  const fresh = [];
+  const col = c => `<div class="crt"><div class="cname">${esc(c.name)}</div>${MATCHES.filter(d => d.court === c.name).map(d => { const m = match(d.id), L = TEAM[m.L], R = TEAM[m.R];
+    const fr = m.done && !seenDecided.has(m.id); if (fr) fresh.push(m.id);
+    const cls = id => m.done ? (m.side === 'D' ? 'draw' : m.winner === id ? 'win' : 'lost') : '';
+    return `<div class="mrow ${fr ? 'fresh' : ''}"><span class="rd">${d.round}</span>
+      <span class="tm ${cls(m.L)}" style="--tc:${L.color}">${timg(L)}<b style="font-size:${L.name.length > 5 ? 26 : 34}px">${esc(L.name)}</b></span>
+      <span class="bl num">${m.done ? `${m.lw}<i>-</i>${m.rw}` : 'VS'}</span>
+      <span class="tm r ${cls(m.R)}" style="--tc:${R.color}"><b style="font-size:${R.name.length > 5 ? 26 : 34}px">${esc(R.name)}</b>${timg(R)}</span></div>`; }).join('')}</div>`;
+  el.innerHTML = `<div class="scene sc-sched"><div class="band"><span class="en">MATCHES</span><span class="ja">${esc(EV.kehai.name)}　対戦表</span></div>
+    <div class="cols">${EV.kehai.courts.map(col).join('')}</div></div>`;
+  if (fresh.length && P && P.key) later(() => play(CONFIG.assets.sfx.reveal, .8), 300);
+  fresh.forEach(id => seenDecided.add(id));
+  MATCHES.forEach(d => { if (!match(d.id).done) seenDecided.delete(d.id); });
+}
+
+/* VS */
+function buildVS(el) {
+  const m = match(state.present.match || nextMatchId());
+  if (!m.ready) { el.innerHTML = `<div class="scene sc-title"><div class="st" style="opacity:1;animation:none">この試合はまだ組み合わせが決まっていません</div></div>`; return; }
+  const L = TEAM[m.L], R = TEAM[m.R];
+  el.innerHTML = `<div class="scene sc-vs shake" id="scVS">
+    <div class="half l" style="--tc:${L.color}"><div class="fill"></div>${timg(L, 'pic')}<div class="tname" style="font-size:${L.name.length > 5 ? 92 : 120}px">${esc(L.name)}</div></div>
+    <div class="half r" style="--tc:${R.color}"><div class="fill"></div>${timg(R, 'pic')}<div class="tname" style="font-size:${R.name.length > 5 ? 92 : 120}px">${esc(R.name)}</div></div>
+    <svg class="seam" viewBox="0 0 1920 1080"><polygon points="1040,0 1060,0 880,1080 860,1080" fill="#0b1024"/><polygon points="1046,0 1052,0 872,1080 866,1080" fill="#ffd23f"/></svg>
+    <div class="mlabel">${esc(EV.kehai.name)}　${esc(m.def.label)}</div>
+    <div class="bigvs">VS</div>
+    <div class="lineup" id="lineup"></div><div id="countLayer"></div></div>`;
+  updateLineup();
+  later(() => play(CONFIG.assets.sfx.vs, .9), 550);
+  later(() => play(CONFIG.assets.voice(L.id)), 1100);
+  later(() => play(CONFIG.assets.voice(R.id)), 2300);
+}
+function updateLineup() {
+  const box = $('#lineup'); if (!box) return;
+  const m = match(state.present.match || nextMatchId()); if (!m.ready) return;
+  const step = state.present.step;
+  box.innerHTML = m.battles.map((b, i) => {
+    const a = state.entries[m.L].kehai[i] || '—', c = state.entries[m.R].kehai[i] || '—';
+    const cl = s => b === s ? 'w' : (b && b !== 'D' ? 'x' : '');
+    return `<div class="li ${step === i + 1 ? 'cur' : ''}"><span class="a ${cl('L')}">${esc(a)}</span><span class="b">${b === 'D' ? 'DRAW' : EV.kehai.battles > 1 ? 'B' + (i + 1) : '籠'}</span><span class="c ${cl('R')}">${esc(c)}</span></div>`;
+  }).join('');
+}
+function stepVS(step, live) {
+  updateLineup();
+  const layer = $('#countLayer'); if (!layer) return;
+  layer.innerHTML = '';
+  if (!(step > 0 && live)) return;
+  const m = match(state.present.match || nextMatchId()); const i = step - 1;
+  const a = state.entries[m.L].kehai[i] || '—', c = state.entries[m.R].kehai[i] || '—';
+  const show = inner => { layer.innerHTML = `<div class="count"><div class="bn">${EV.kehai.battles > 1 ? `BATTLE ${step}` : 'READY?'}</div><div class="who">${esc(a)} <b>VS</b> ${esc(c)}</div>${inner}</div>`; };
+  show('');
+  // 音声の再生開始に合わせて 3 → 2 → 1 → GO! を表示する
+  const at = CONFIG.assets.sfx.countdownAt, t0 = 900;
+  later(() => play(CONFIG.assets.sfx.countdown), t0);
+  ['3', '2', '1'].forEach((n, k) => later(() => show(`<div class="n">${n}</div>`), t0 + at[k]));
+  later(() => show(`<div class="fight">GO!</div>`), t0 + at[3]);
+  later(() => { layer.innerHTML = ''; }, t0 + at[3] + 1600);
+}
+
+/* 順位発表 */
+function buildRank(el) {
+  const ev = state.present.event || 'total', list = ranking(ev);
+  el.innerHTML = `<div class="scene sc-rank" id="scRank"><div class="band"><span class="en">RESULT</span><span class="ja">${esc(EVLABEL[ev])}</span></div>
+    <div class="rows">${list.map((r, i) => `<div class="rrow ${i === 0 ? 'first' : ''}" id="rr${i}" style="--tc:${r.t.color}"><span class="rk">${r.rank}</span>${timg(r.t)}<span class="nm">${esc(r.t.name)}</span><span class="pt num">${r.pt}<small>pt</small></span></div>`).join('')}</div>
+    <div id="winLayer"></div></div>`;
+  P.rankList = list;
+}
+function playVictory(id) {
+  if (muted) return;
+  try { const a = new Audio(CONFIG.assets.victory(id)); a.onerror = () => play(CONFIG.assets.sfx.win); a.play().catch(() => {}); } catch (e) {}
+}
+function stepRank(step, live, prev) {
+  const n = CONFIG.teams.length, list = P.rankList || [];
+  for (let i = 0; i < n; i++) { const el = $('#rr' + i); if (el) el.classList.toggle('show', i >= n - step); }
+  const wl = $('#winLayer'); if (wl) wl.innerHTML = '';
+  if (live && step > 0 && step < n) play(CONFIG.assets.sfx.reveal, .8);
+  if (step === n && live && list[0]) {
+    const t = list[0].t;
+    later(() => {
+      const conf = Array.from({ length: 90 }, () => `<i style="left:${Math.random() * 100}%;background:${['#ffd23f', '#ff4057', '#fff', t.color, '#3ddc97'][Math.floor(Math.random() * 5)]};animation-duration:${2.5 + Math.random() * 2.5}s;animation-delay:${Math.random() * 1.2}s"></i>`).join('');
+      wl.innerHTML = `<div class="winner" style="--tc:${t.color}"><div class="in">${timg(t)}<div class="lab">WINNER</div><div class="nm">${esc(t.name)}</div></div></div><div class="confetti">${conf}</div>`;
+      play(CONFIG.assets.voice(t.id)); later(() => playVictory(t.id), 1200);  // 名前を呼んでから勝利BGM
+      wl.querySelector('.winner').onclick = () => { wl.innerHTML = ''; };
+    }, 900);
+  }
+}
+
+/* =====================================================================
+   4. 観戦画面（全員用・スマホ想定・閲覧のみ）
+   ===================================================================== */
+function renderViewer() {
+  const rk = ranking(), pts = eventPoints();
+  const nm = match(nextMatchId());
+  const mline = m => {
+    const L = TEAM[m.L], R = TEAM[m.R], c = id => m.winner ? (m.winner === id ? 'w' : 'l') : '';
+    return `<div class="mline"><span class="${c(m.L)}"><span class="tdot" style="--tc:${L.color}"></span>${esc(L.name)}</span><span class="score num">${m.done ? `${m.lw}-${m.rw}` : 'vs'}</span><span class="r ${c(m.R)}">${esc(R.name)}<span class="tdot" style="--tc:${R.color};margin:0 0 0 6px"></span></span></div>`;
+  };
+  $('#app').innerHTML = `<div class="wrap narrow stack">
+    <div><div class="eyebrow">LIVE</div><h1>${esc(CONFIG.eventTitle)} ${esc(CONFIG.eventSubtitle)}</h1><p class="muted small">結果が入ると自動で更新されます。</p></div>
+    ${!nm.done ? `<section class="vhero"><div class="eyebrow">次の対戦　${esc(EV.kehai.name)} ${esc(nm.def.label)}</div>
+      <div class="vs-mini"><div class="side">${timg(TEAM[nm.L])}${esc(TEAM[nm.L].name)}</div><span class="v">VS</span><div class="side">${timg(TEAM[nm.R])}${esc(TEAM[nm.R].name)}</div></div></section>` : ''}
+    <section class="panel"><div class="evhead"><h2>総合順位</h2><span class="muted small">pt</span></div>
+      ${rk.map(r => `<div class="rankrow ${r.rank === 1 && r.pt > 0 ? 'top' : ''}"><span class="rk">${r.rank}</span>${timg(r.t)}<span><b>${esc(r.t.name)}</b><br><span class="muted small num">体${pts[r.t.id].radio}・${EV.kehai.short}${pts[r.t.id].kehai}・借${pts[r.t.id].kariru}・障${pts[r.t.id].relay}・ク${pts[r.t.id].quiz}</span></span><span class="score num">${r.pt}</span></div>`).join('')}</section>
+    <section class="panel stack"><h2>${esc(EV.kehai.name)} 対戦表</h2>
+      ${EV.kehai.courts.map(c => `<div class="stack" style="gap:6px"><span class="eyebrow">${esc(c.name)}</span><div class="mlist">${MATCHES.filter(d => d.court === c.name).map(d => mline(match(d.id))).join('')}</div></div>`).join('')}</section>
+    <section class="panel stack"><h2>${esc(EV.kariru.name)}</h2>
+      <p class="small muted">終了 ${state.results.kariru.filter(o => o.length).length} / ${EV.kariru.rounds} 回</p></section>
+  </div>`;
+}
+
+$('#staffOut').onclick = () => { setAuth(null); session = null; rerender(); };
+updateNav();
+rerender();
+if (REMOTE) pollLoop();
+</script>
+</body>
+</html>
