@@ -197,6 +197,46 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 .namecall .nc span{font-family:var(--f-display);font-size:110px;color:#fff;-webkit-text-stroke:5px #0b1024;paint-order:stroke fill;letter-spacing:.06em}
 @keyframes ncIn{0%{opacity:0;transform:skewY(-3deg) translateX(-30%)}15%{opacity:1;transform:skewY(-3deg) translateX(0)}80%{opacity:1}100%{opacity:0;transform:skewY(-3deg) translateX(10%)}}
 
+/* 演出操作（進行表） */
+.ctl{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:16px;align-items:start}
+@media (max-width:900px){.ctl{grid-template-columns:1fr}}
+.runlist{gap:4px}
+.runrow{display:flex;gap:10px;align-items:center;text-align:left;padding:9px 12px;border-radius:6px;border:1px solid var(--line);background:transparent;color:var(--fg);font-weight:700;font-size:14px;cursor:pointer}
+.runrow .mk{width:18px;flex:none;color:var(--gold)}.runrow.done{color:var(--muted)}.runrow.done .mk{color:var(--ok)}
+.runrow.cur{background:var(--gold);color:#111;border-color:var(--gold)}.runrow.cur .mk{color:#111}
+.ctlside{position:sticky;top:60px}
+.nowbox{padding:12px 14px;border-radius:8px;background:rgba(255,210,63,.1);border:1px solid var(--gold)}.nowlab{font-size:20px;font-weight:900}
+.btn.big{font-size:20px;padding:14px 18px}
+.adlive{display:block;width:100%;aspect-ratio:16/9;border:0;border-radius:8px;background:#000}
+/* 係用：コート入力 */
+.cpair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cside{display:flex;flex-direction:column;gap:10px;align-items:stretch;padding:14px;border-radius:10px;border:3px solid var(--tc);background:color-mix(in srgb,var(--tc) 14%,transparent)}
+.cnm{font-weight:900;font-size:18px}.cnum{font-size:64px;font-weight:900;text-align:center;line-height:1}
+.cbtns{display:grid;grid-template-columns:1fr 1.4fr;gap:8px}.cbtns .btn{font-size:22px;padding:14px 0}
+.cside input{font-size:18px;text-align:center}
+/* 演出：人間玉入れ（2コート） */
+.sc-tama .courts{position:absolute;left:50px;right:50px;top:200px;height:640px;display:grid;grid-template-columns:1fr 1fr;gap:40px}
+.sc-tama .court{display:flex;flex-direction:column;gap:14px}
+.sc-tama .cname{font-family:var(--f-display);font-size:48px;color:var(--gold);text-align:center}
+.sc-tama .pair{flex:1;display:grid;grid-template-columns:1fr 90px 1fr;align-items:center;gap:10px}
+.sc-tama .v{font-family:var(--f-display);font-size:64px;text-align:center;color:#fff;-webkit-text-stroke:3px #0b1024}
+.tside{display:flex;flex-direction:column;align-items:center;gap:10px;padding:22px 10px;border-radius:16px;background:#18214d;border:4px solid var(--tc);transition:filter .4s,transform .4s}
+.tside .timg{width:170px;height:170px;--fs:70px}.tside b{font-family:var(--f-display);font-weight:400;white-space:nowrap}
+.tside small{font-size:24px;color:#c6cdf0}.tside .balls{font-family:var(--f-display);font-size:92px;line-height:1;min-height:92px}.tside .balls.wait{font-size:44px;line-height:92px;color:#9aa6d8}
+.tside.win{transform:scale(1.05);box-shadow:0 0 50px var(--tc)}.tside.lose{filter:grayscale(1) brightness(.5)}
+.sc-tama .tmr{position:absolute;left:50%;bottom:40px;transform:translateX(-50%);font-family:var(--f-display);font-size:110px;line-height:1;padding:8px 40px;border-radius:16px;background:rgba(8,12,30,.85);border:5px solid var(--gold)}
+.sc-tama .tmr.low{color:#ff4057;border-color:#ff4057}.sc-tama .tmr.up{color:#ff4057;border-color:#ff4057;animation:chipPop .6s both}
+/* 演出：借り人競争 */
+.sc-kariru .kgrid{position:absolute;left:60px;right:60px;top:210px;bottom:60px;display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+.kc{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;border-radius:14px;background:#18214d;border:4px solid var(--tc);transition:filter .4s,transform .4s}
+.kc .timg{width:120px;height:120px;--fs:50px}.kc .kn{text-align:center}.kc .kn b{display:block;font-family:var(--f-display);font-weight:400;font-size:32px}.kc .kn span{font-size:30px;font-weight:900}
+.kc .kr{position:absolute;top:10px;right:14px;font-family:var(--f-display);font-size:60px;line-height:1;color:var(--gold)}.kc .kr small{font-size:26px}.kc .kr em{display:block;font-style:normal;font-size:26px;text-align:right;color:#fff}
+.kc.top{box-shadow:0 0 50px var(--tc);transform:scale(1.04)}.kc.dim{filter:grayscale(1) brightness(.5)}
+/* 演出：障害物競走 */
+.sc-relay .legs{position:absolute;left:80px;right:80px;top:200px;bottom:50px;display:grid;grid-template-columns:1fr 1fr;gap:18px 40px;align-content:start}
+.leg{display:flex;gap:18px;align-items:flex-start;padding:18px 22px;border-radius:12px;background:#18214d;border:3px solid #36437f}
+.leg .no{font-family:var(--f-display);font-size:64px;line-height:1;color:var(--gold);min-width:60px}.leg b{font-size:36px}.leg b small{font-size:24px}.leg p{margin:6px 0 0;font-size:22px;color:#c6cdf0}
+
 /* 対戦表（人間玉入れ） */
 .sc-sched .cols{position:absolute;left:60px;right:60px;top:210px;bottom:50px;display:grid;grid-template-columns:1fr 1fr;gap:50px}
 .sc-sched .crt{display:flex;flex-direction:column;gap:18px}
@@ -353,7 +393,7 @@ const CONFIG = {
     // bonus：全員借りられたチーム（全員座ったチーム）への追加点（SKD より）
     kariru: { name: '借り人競争', rounds: 8, points: [20, 15, 12, 10, 8, 5, 2, 1], bonus: 10 },
     // 内部の名前は kehai のまま（旧・気配斬り）。2コート×4試合、各チーム2試合。玉数を入れ、多いほうが勝ち
-    kehai:  { name: '人間玉入れ', short: '玉', battles: 1, slot: '籠を背負う人', provisional: true,
+    kehai:  { name: '人間玉入れ', short: '玉', battles: 1, slot: '籠を背負う人', provisional: true, minutes: 5,
               points: { win: 20, draw: 10, lose: 0 },
               // 企画班の対戦表どおり（同じ番号の試合は2コート同時）
               courts: [
@@ -387,7 +427,7 @@ const CONFIG = {
       fight: 'assets/sfx/fight.mp3',
       // 3・2・1・GO! が1本に入った音声。countdownAt は各カウントが鳴る時刻（ミリ秒）
       countdown: 'assets/sfx/countdown.mp3', countdownAt: [0, 1040, 2020, 3000],
-      reveal: 'assets/sfx/reveal.mp3', win: 'assets/sfx/win.mp3',
+      reveal: 'assets/sfx/reveal.mp3', win: 'assets/sfx/win.mp3', timeup: 'assets/sfx/quiz_close.mp3',
       bgm: 'assets/sfx/bgm.mp3',
     },
   },
@@ -510,7 +550,7 @@ async function pull() {
   updateNav();
 }
 // 読み込みの間隔：運営（管理・演出）2秒、チーム登録5秒、観戦10秒（大人数で開くのでゆっくり）
-function pollLoop() { pull().finally(() => setTimeout(pollLoop, { admin: 2000, present: 2000, register: 5000 }[mode()] || 10000)); }
+function pollLoop() { pull().finally(() => setTimeout(pollLoop, { admin: 2000, present: 1500, court: 2000, register: 5000 }[mode()] || 10000)); }
 
 function save() {
   if (REMOTE) { pushOps(); return; }
@@ -550,7 +590,7 @@ function R(src) {
   return /\.(png|jpe?g|gif|webp|svg)$/i.test(src) ? `https://lh3.googleusercontent.com/d/${id}` : `https://drive.usercontent.google.com/download?id=${id}&export=download`;
 }
 async function loadDriveAssets() {
-  if (!REMOTE || location.protocol === 'file:' || DRIVE || !auth || auth.role !== 'staff') return;
+  if (!REMOTE || PREVIEW || location.protocol === 'file:' || DRIVE || !auth || auth.role !== 'staff') return;
   try {
     const d = await apiPost({ a: 'assets', pass: auth.pass });
     if (!d.ok) return;
@@ -632,7 +672,8 @@ const EVLABEL = { total: '総合順位', radio: EV.radio.name, kehai: EV.kehai.n
 /* =====================================================================
    画面切替
    ===================================================================== */
-function mode() { const h = location.hash.slice(1); return ['register', 'admin', 'present', 'viewer'].includes(h) ? h : 'register'; }
+function mode() { const h = location.hash.slice(1).split('/')[0]; return ['register', 'admin', 'present', 'viewer', 'court'].includes(h) ? h : 'register'; }
+const PREVIEW = new URLSearchParams(location.search).has('preview');  // 管理画面に小さく映す確認用（音なし）
 function rerender(remote = false) {
   const m = mode();
   document.querySelectorAll('#modebar a').forEach(a => a.classList.toggle('on', a.dataset.mode === m));
@@ -640,10 +681,10 @@ function rerender(remote = false) {
   if (m !== 'present') teardownPresent();
   // 入力中の画面は、他タブからの更新で描き直さない（入力が消えるため）
   const ae = document.activeElement;
-  if (remote && (m === 'register' || m === 'admin') && ae && ae.matches('input,textarea,select') && ae.closest('#app')) return;
+  if (remote && (m === 'register' || m === 'admin' || m === 'court') && ae && ae.matches('input,textarea,select') && ae.closest('#app')) return;
   if (!loaded) { $('#app').innerHTML = `<div class="wrap narrow"><p class="muted">${netErr ? 'データ置き場につながりません。通信を確認してください。' : '読み込み中…'}</p></div>`; return; }
-  if ((m === 'admin' || m === 'present') && !isStaff()) { renderStaffGate(); return; }
-  ({ register: renderRegister, admin: renderAdmin, present: renderPresent, viewer: renderViewer })[m]();
+  if ((m === 'admin' || m === 'present' || m === 'court') && !isStaff()) { renderStaffGate(); return; }
+  ({ register: renderRegister, admin: renderAdmin, present: renderPresent, viewer: renderViewer, court: renderCourt })[m]();
 }
 /* 運営パスの入力（共有モードのとき、管理・演出の画面で使う） */
 function renderStaffGate() {
@@ -934,28 +975,64 @@ function adminScore() {
     <p class="muted small" style="margin-top:10px">${EV.kehai.name}の仮得点：1試合ごとに 勝ち ${EV.kehai.points.win} ／ 引き分け ${EV.kehai.points.draw} ／ 負け ${EV.kehai.points.lose}（各チーム2試合）。${EV.relay.name}は借り人競争と同じ配点を仮置き。${EV.radio.name}は最大${EV.radio.max}点を仮置き。借り人競争は全員借りられたチームに+${EV.kariru.bonus}点。</p>`;
 }
 
-function adminControl() {
+/* 当日の進行表：上から順に「次へ」で進む */
+const RUN = (() => {
+  const r = [{ label: 'オープニング（タイトル）', scene: 'title' }, { label: 'チーム紹介', scene: 'teams' },
+    { label: `${EV.radio.name} 結果発表`, scene: 'rank', event: 'radio' }];
+  for (let k = 1; k <= 4; k++) r.push({ label: `${EV.kehai.name} 第${k}試合（2コート同時）`, scene: 'tama', round: k });
+  r.push({ label: `${EV.kehai.name} 対戦表`, scene: 'bracket' }, { label: `${EV.kehai.name} 順位発表`, scene: 'rank', event: 'kehai' });
+  for (let k = 1; k <= EV.kariru.rounds; k++) r.push({ label: `${EV.kariru.name} 第${k}回`, scene: 'kariru', round: k });
+  r.push({ label: `${EV.kariru.name} 順位発表`, scene: 'rank', event: 'kariru' },
+    { label: `${EV.relay.name} 種目紹介`, scene: 'relay' }, { label: `${EV.relay.name} 順位発表`, scene: 'rank', event: 'relay' },
+    { label: '中間順位（クイズの前）', scene: 'rank', event: 'total' }, { label: 'クイズ（クイズの画面に切り替える）', scene: 'quiz' },
+    { label: '総合順位発表 → 優勝', scene: 'rank', event: 'total' });
+  return r;
+})();
+const STEPLABEL = { title: ['タイトル', 'オープニング映像'], teams: i => i ? `${i} / ${CONFIG.teams.length} チーム紹介済み` : '全チーム表示',
+  rank: i => i ? `${i} / ${CONFIG.teams.length} 位まで公開` : '順位は伏せた状態', tama: ['対戦カード', 'カウントダウン → 試合中', '結果表示'],
+  kariru: ['出走者', '結果'], bracket: ['表示中'], relay: ['表示中'], quiz: ['表示中'] };
+function stepLabel() { const p = state.present, f = STEPLABEL[p.scene]; return typeof f === 'function' ? f(p.step) : (f || [])[p.step] || ''; }
+function goRun(i) {
+  i = Math.max(0, Math.min(RUN.length - 1, i));
+  const it = RUN[i], p = state.present;
+  Object.assign(p, { run: i, scene: it.scene, round: it.round || null, step: 0, timerAt: null, nonce: (p.nonce || 0) + 1 });
+  if (it.event) p.event = it.event;
+  save(); if (mode() === 'present') renderPresent();
+}
+function advance(d) {
   const p = state.present;
-  const sc = [['title', 'タイトル'], ['teams', 'チーム紹介'], ['bracket', '対戦表'], ['vs', 'VS（対戦カード）'], ['rank', '順位発表']];
-  const playable = MATCHES.map(d => match(d.id));
-  $('#atab').innerHTML = `<div class="stack">
-    <div class="warnbox">演出画面を別タブ（またはプロジェクター用の別ウィンドウ）で開くと、ここでの操作に合わせて切り替わります。演出側の画面を一度クリックしておくと音が鳴ります。
-      <div class="row" style="margin-top:8px"><a class="btn sm" href="#present" target="_blank" rel="noopener" style="text-decoration:none">演出画面を別タブで開く</a></div></div>
-    <section class="panel stack"><h2>場面</h2><div class="ctrlgrid">${sc.map(([k, v]) => `<button class="btn ${p.scene === k ? 'on' : ''}" type="button" data-sc="${k}">${v}</button>`).join('')}</div></section>
-    <section class="panel stack"><h2>進める</h2><div class="row"><button class="btn primary" type="button" id="stepNext">次へ（Space）</button><button class="btn" type="button" id="stepPrev">1つ戻す</button>
-      <span class="muted small">現在：${esc(sc.find(s => s[0] === p.scene)?.[1])} ／ ステップ ${p.step}</span></div>
-      <p class="muted small">チーム紹介：1チームずつ呼び込み ／ VS：対戦カードのカウントダウン ／ 順位発表：最下位から1チームずつ公開</p></section>
-    <section class="grid2">
-      <div class="panel stack"><h3>VSで表示する試合</h3><select id="ctlMatch">${playable.map(m => `<option value="${m.id}" ${(p.match || nextMatchId()) === m.id ? 'selected' : ''}>${m.def.label}：${esc(TEAM[m.L].name)} vs ${esc(TEAM[m.R].name)}${m.done ? '（終了）' : ''}</option>`).join('')}</select></div>
-      <div class="panel stack"><h3>順位発表の対象</h3><select id="ctlEvent">${Object.entries(EVLABEL).map(([k, v]) => `<option value="${k}" ${p.event === k ? 'selected' : ''}>${v}</option>`).join('')}</select></div>
+  if (p.run == null) { goRun(0); return; }
+  if (d > 0) { if (p.step < maxStep()) stepBy(1); else goRun(p.run + 1); }
+  else { if (p.step > 0) stepBy(-1); else goRun(p.run - 1); }
+}
+function adminControl() {
+  const p = state.present, cur = p.run ?? -1;
+  const site = location.href.split('#')[0].split('?')[0];
+  $('#atab').innerHTML = `<div class="ctl">
+    <section class="panel stack runlist"><div class="evhead"><h2>進行表</h2><span class="muted small">行を押すとその場面へ</span></div>
+      ${RUN.map((it, i) => `<button type="button" class="runrow ${i === cur ? 'cur' : ''} ${i < cur ? 'done' : ''}" data-run="${i}"><span class="mk">${i < cur ? '✓' : i === cur ? '▶' : ''}</span>${esc(it.label)}</button>`).join('')}</section>
+    <section class="panel stack ctlside">
+      <div class="nowbox"><div class="eyebrow">いま</div><div class="nowlab">${cur >= 0 ? esc(RUN[cur].label) : '（まだ始まっていません）'}</div><div class="muted small">${esc(cur >= 0 ? stepLabel() : '')}</div></div>
+      <div class="row" style="flex-wrap:nowrap"><button class="btn" type="button" id="runPrev" style="flex:1">◀ 戻る</button><button class="btn primary big" type="button" id="runNext" style="flex:2">次へ ▶ <kbd>Space</kbd></button></div>
+      <div class="muted small">次へを押すと：${cur < 0 ? esc(RUN[0].label) : p.step < maxStep() ? '同じ場面の続き' : cur + 1 < RUN.length ? esc(RUN[cur + 1].label) : '（最後です）'}</div>
+      <div class="eyebrow" style="margin-top:6px">プロジェクターに映っている画面（音なし）</div>
+      <iframe class="adlive" src="${site}?preview=1#present" title="演出画面の確認"></iframe>
+      <div class="row small"><a class="btn sm" href="${site}#present" target="_blank" rel="noopener" style="text-decoration:none">演出画面を別ウインドウで開く</a></div>
+      <div class="stack small" style="gap:4px"><b>係用の入力画面（運営パスで入る）</b>
+        ${EV.kehai.courts.map((c, i) => `<span>${esc(EV.kehai.name)} ${esc(c.name)}：<code>${esc(site)}#court/${i + 1}</code></span>`).join('')}</div>
     </section></div>`;
   const at = $('#atab');
-  at.querySelectorAll('[data-sc]').forEach(b => b.onclick = () => { setScene(b.dataset.sc); adminControl(); });
-  $('#stepNext').onclick = () => { stepBy(1); adminControl(); };
-  $('#stepPrev').onclick = () => { stepBy(-1); adminControl(); };
-  $('#ctlMatch').onchange = e => { state.present.match = e.target.value; if (p.scene === 'vs') { p.step = 0; p.nonce++; } save(); };
-  $('#ctlEvent').onchange = e => { state.present.event = e.target.value; if (p.scene === 'rank') { p.step = 0; p.nonce++; } save(); };
+  at.querySelectorAll('[data-run]').forEach(b => b.onclick = () => { goRun(+b.dataset.run); adminControl(); });
+  $('#runNext').onclick = () => { advance(1); adminControl(); };
+  $('#runPrev').onclick = () => { advance(-1); adminControl(); };
 }
+// 演出操作を開いているときは Space で次へ、← で戻る
+window.addEventListener('keydown', e => {
+  if (mode() !== 'admin' || adminTab !== 'control') return;
+  if (e.target.closest && e.target.closest('input,select,textarea')) return;
+  if (e.key === ' ' || e.key === 'ArrowRight') { e.preventDefault(); advance(1); adminControl(); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); advance(-1); adminControl(); }
+});
 
 /* サンプルデータ（企画班へのデモ用） */
 function fillSample() {
@@ -987,16 +1064,19 @@ function fitStage() { const s = Math.min(innerWidth / 1920, innerHeight / 1080);
 function setScene(sc) { const p = state.present; p.scene = sc; p.step = 0; p.nonce++; if (sc === 'vs' && !p.match) p.match = nextMatchId(); save(); if (mode() === 'present') renderPresent(); }
 function maxStep() {
   const p = state.present;
-  return { title: 1, teams: CONFIG.teams.length, bracket: 0, vs: EV.kehai.battles, rank: CONFIG.teams.length }[p.scene] ?? 0;
+  return { title: 1, teams: CONFIG.teams.length, bracket: 0, vs: EV.kehai.battles, rank: CONFIG.teams.length, tama: 2, kariru: 1, relay: 0, quiz: 0 }[p.scene] ?? 0;
 }
-function stepBy(d) { const p = state.present; p.step = Math.max(0, Math.min(maxStep(), p.step + d)); save(); if (mode() === 'present') renderPresent(); }
+function stepBy(d) {
+  const p = state.present; p.step = Math.max(0, Math.min(maxStep(), p.step + d));
+  // 玉入れ：カウントダウンに進めたとき、GO! の瞬間を試合開始時刻にする（どの画面でも同じ残り時間になる）
+  if (p.scene === 'tama') { if (p.step === 1 && d > 0) p.timerAt = Date.now() + 900 + CONFIG.assets.sfx.countdownAt[3]; if (p.step === 0) p.timerAt = null; }
+  save(); if (mode() === 'present') renderPresent();
+}
 
 function presentKey(e) {
   if (e.target.closest && e.target.closest('input,select,textarea')) return;
-  const map = { '1': 'title', '2': 'teams', '3': 'bracket', '4': 'vs', '5': 'rank' };
-  if (map[e.key]) { setScene(map[e.key]); }
-  else if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 'Enter') { e.preventDefault(); stepBy(1); }
-  else if (e.key === 'ArrowLeft' || e.key === 'Backspace') { e.preventDefault(); stepBy(-1); }
+  if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 'Enter') { e.preventDefault(); advance(1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'Backspace') { e.preventDefault(); advance(-1); }
   else if (e.key === 'f' || e.key === 'F') { (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.())?.catch?.(() => {}); }
   else if (e.key === 'm' || e.key === 'M') { muted = !muted; }
   else if (e.key === 'Escape' && !document.fullscreenElement) { location.hash = '#admin'; }
@@ -1008,24 +1088,27 @@ function renderPresent() {
   const app = $('#app');
   if (!P) {
     app.innerHTML = `<div id="presentRoot"><div id="stage"><img class="bgimg" src="${R(CONFIG.assets.bg)}" alt="" onerror="this.remove()"><div class="stripes"></div><div id="scene"></div>
-      <div class="hint" id="hint">Space：次へ ／ ← 戻る ／ 1〜5：場面 ／ F：全画面 ／ M：消音 ／ Esc：管理へ</div>
-      ${P_unlocked ? '' : '<div class="startgate" id="gate"><div>クリックで演出を開始<small>ブラウザの仕様で、一度クリックするまで音が鳴りません</small></div></div>'}</div></div>
-      <button class="exitbtn" type="button" onclick="location.hash='#admin'">管理画面へ</button>`;
+      ${PREVIEW ? '' : '<div class="hint" id="hint">Space：次へ ／ ← 戻る ／ F：全画面 ／ M：消音 ／ Esc：管理へ</div>'}
+      ${P_unlocked || PREVIEW ? '' : '<div class="startgate" id="gate"><div>クリックで演出を開始<small>ブラウザの仕様で、一度クリックするまで音が鳴りません</small></div></div>'}</div></div>
+      ${PREVIEW ? '' : `<button class="exitbtn" type="button" onclick="location.hash='#admin'">管理画面へ</button>`}`;
     P = { key: null, step: -1, timers: [] };
-    window.addEventListener('resize', fitStage); window.addEventListener('keydown', presentKey);
+    if (PREVIEW) muted = true;
+    window.addEventListener('resize', fitStage); if (!PREVIEW) window.addEventListener('keydown', presentKey);
     fitStage(); showHint();
     const gate = $('#gate'); if (gate) gate.onclick = () => { P_unlocked = true; gate.remove(); play(CONFIG.assets.sfx.bgm, .35); };
     $('#presentRoot').addEventListener('mousemove', showHint);
   }
   const p = state.present;
-  const key = `${p.scene}|${p.match}|${p.event}|${p.nonce}`;
+  const key = `${p.scene}|${p.match}|${p.event}|${p.round}|${p.nonce}`;
   const sceneEl = $('#scene');
   if (key !== P.key) {
     P.timers.forEach(clearTimeout); P.timers = [];
     P.key = key; P.step = -1;
     sceneEl.innerHTML = '';
-    ({ title: buildTitle, teams: buildTeams, bracket: buildBracket, vs: buildVS, rank: buildRank })[p.scene](sceneEl);
+    ({ title: buildTitle, teams: buildTeams, bracket: buildBracket, vs: buildVS, rank: buildRank, tama: buildTama, kariru: buildKariru, relay: buildRelay, quiz: buildQuiz })[p.scene](sceneEl);
   } else if (p.scene === 'bracket') { buildBracket(sceneEl); }
+  else if (p.scene === 'tama') { updateTama(); }
+  else if (p.scene === 'kariru') { updateKariru(); }
   else if (p.scene === 'vs') { updateLineup(); }
   applyStep(p.step);
 }
@@ -1040,6 +1123,84 @@ function applyStep(step) {
   if (sc === 'teams') stepTeams(step, live);
   if (sc === 'vs') stepVS(step, live);
   if (sc === 'rank') stepRank(step, live, prev);
+  if (sc === 'tama') stepTama(step, live);
+  if (sc === 'kariru') updateKariru(live);
+}
+
+/* 人間玉入れ：2コート同時の対戦 */
+function tamaMatches(k) { return EV.kehai.courts.map((c, ci) => match(`C${ci + 1}-${k}`)); }
+function buildTama(el) {
+  const k = state.present.round || 1;
+  const side = (id, mid, s) => { const t = TEAM[id]; return `<div class="tside" id="ts_${mid}_${s}" style="--tc:${t.color}">${timg(t)}<b style="font-size:${t.name.length > 5 ? 34 : 44}px">${esc(t.name)}</b>
+    <small>籠：${esc(state.entries[id].kehai[0] || '—')}</small><div class="balls num" id="tb_${mid}_${s}"></div></div>`; };
+  el.innerHTML = `<div class="scene sc-tama" id="scTama"><div class="band"><span class="en">MATCH ${k}</span><span class="ja">${esc(EV.kehai.name)}　第${k}試合</span></div>
+    <div class="courts">${tamaMatches(k).map(m => `<div class="court"><div class="cname">${esc(m.def.court)}</div>
+      <div class="pair">${side(m.L, m.id, 'a')}<div class="v">VS</div>${side(m.R, m.id, 'b')}</div></div>`).join('')}</div>
+    <div class="tmr num" id="tamaTimer">${EV.kehai.minutes}:00</div><div id="countLayer"></div></div>`;
+  later(() => play(CONFIG.assets.sfx.vs, .9), 400);
+  tamaTick();
+}
+function tamaTick() {
+  const el = $('#tamaTimer'); if (!el) return;
+  const p = state.present, total = EV.kehai.minutes * 60000;
+  if (p.timerAt && p.step >= 1) {
+    const rem = total - Math.max(0, Date.now() - p.timerAt);
+    if (rem > 0) { const s = Math.ceil(rem / 1000); el.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; el.classList.toggle('low', s <= 30); el.classList.remove('up'); }
+    else { el.textContent = 'TIME UP'; el.classList.add('up'); if (P && !P.timeup) { P.timeup = true; if (Date.now() - p.timerAt - total < 3000) play(CONFIG.assets.sfx.timeup); } }
+  } else { el.textContent = `${EV.kehai.minutes}:00`; el.classList.remove('low', 'up'); }
+  later(tamaTick, 250);
+}
+function stepTama(step, live) {
+  updateTama();
+  const layer = $('#countLayer'); if (!layer) return;
+  layer.innerHTML = '';
+  if (step === 1 && live) {
+    const show = inner => { layer.innerHTML = `<div class="count"><div class="bn">READY?</div>${inner}</div>`; };
+    const at = CONFIG.assets.sfx.countdownAt, t0 = 900;
+    show(''); later(() => play(CONFIG.assets.sfx.countdown), t0);
+    ['3', '2', '1'].forEach((n, i) => later(() => show(`<div class="n">${n}</div>`), t0 + at[i]));
+    later(() => show(`<div class="fight">GO!</div>`), t0 + at[3]);
+    later(() => { layer.innerHTML = ''; }, t0 + at[3] + 1400);
+  }
+  if (step === 2 && live) later(() => play(CONFIG.assets.sfx.reveal, .8), 200);
+}
+function updateTama() {
+  const p = state.present, show = p.step >= 2;
+  tamaMatches(p.round || 1).forEach(m => {
+    [['a', m.L, m.lw], ['b', m.R, m.rw]].forEach(([s, id, n]) => {
+      const box = $(`#tb_${m.id}_${s}`), sd = $(`#ts_${m.id}_${s}`); if (!box || !sd) return;
+      box.textContent = show ? (m.done ? n : '集計中') : ''; box.classList.toggle('wait', show && !m.done);
+      sd.classList.toggle('win', show && m.done && m.winner === id); sd.classList.toggle('lose', show && m.done && m.loser === id);
+      sd.classList.toggle('draw', show && m.done && m.side === 'D');
+    });
+  });
+}
+
+/* 借り人競争：第○回の出走者と結果 */
+function buildKariru(el) {
+  const k = state.present.round || 1;
+  el.innerHTML = `<div class="scene sc-kariru" id="scKariru"><div class="band"><span class="en">ROUND ${k}</span><span class="ja">${esc(EV.kariru.name)}　第${k}回</span></div>
+    <div class="kgrid">${CONFIG.teams.map(t => `<div class="kc" id="kc_${t.id}" style="--tc:${t.color}">${timg(t)}<div class="kn"><b>${esc(t.name)}</b><span>${esc(state.entries[t.id].kariru[k - 1] || '—')}</span></div><div class="kr num" id="kr_${t.id}"></div></div>`).join('')}</div></div>`;
+}
+function updateKariru(live) {
+  const p = state.present, k = p.round || 1, order = state.results.kariru[k - 1] || [], show = p.step >= 1;
+  CONFIG.teams.forEach(t => {
+    const i = order.indexOf(t.id), c = $('#kc_' + t.id), r = $('#kr_' + t.id); if (!c || !r) return;
+    r.innerHTML = show && i >= 0 ? `${i + 1}<small>位</small><em>+${EV.kariru.points[i] || 0}</em>` : '';
+    c.classList.toggle('ranked', show && i >= 0); c.classList.toggle('top', show && i === 0); c.classList.toggle('dim', show && order.length > 0 && i < 0);
+  });
+  if (live && show) play(CONFIG.assets.sfx.reveal, .8);
+}
+
+/* 障害物競走：種目紹介 */
+function buildRelay(el) {
+  el.innerHTML = `<div class="scene sc-relay"><div class="band"><span class="en">OBSTACLE RACE</span><span class="ja">${esc(EV.relay.name)}</span></div>
+    <div class="legs">${EV.relay.legs.map((l, i) => `<div class="leg"><span class="no num">${i + 1}</span><div><b>${esc(l.task)}${l.people > 1 ? `<small>（${l.people}人）</small>` : ''}</b><p>${esc(l.desc)}</p></div></div>`).join('')}</div></div>`;
+}
+/* クイズ：クイズの画面に切り替える前の表示 */
+function buildQuiz(el) {
+  el.innerHTML = `<div class="scene sc-title"><div class="slash"></div><div style="position:relative;display:flex;flex-direction:column;align-items:center">
+    <div class="tt">QUIZ</div><div class="st">クイズの画面に切り替えます</div></div></div>`;
 }
 
 /* タイトル */
@@ -1165,6 +1326,37 @@ function stepRank(step, live, prev) {
       wl.querySelector('.winner').onclick = () => { wl.innerHTML = ''; };
     }, 900);
   }
+}
+
+/* =====================================================================
+   係用：人間玉入れのコート入力（#court/1, #court/2）
+   ===================================================================== */
+let courtRound = null;
+function renderCourt() {
+  const ci = Math.max(1, Math.min(EV.kehai.courts.length, +(location.hash.split('/')[1] || 1))), c = EV.kehai.courts[ci - 1], p = state.present;
+  const live = p.scene === 'tama' ? p.round : null;
+  const k = courtRound || live || (MATCHES.filter(d => d.court === c.name).map(d => match(d.id)).findIndex(m => !m.done) + 1) || 4;
+  const m = match(`C${ci}-${k}`), r = state.results.kehai[m.id] || {}, L = TEAM[m.L], Rt = TEAM[m.R];
+  let tm = '';
+  if (live === k && p.timerAt && p.step >= 1) { const rem = EV.kehai.minutes * 60000 - Math.max(0, Date.now() - p.timerAt); const sec = Math.ceil(rem / 1000); tm = rem > 0 ? `残り ${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}` : 'TIME UP'; }
+  const side = (t, key, v) => `<div class="cside" style="--tc:${t.color}"><div class="cnm"><span class="tdot" style="--tc:${t.color}"></span>${esc(t.name)}</div>
+    <div class="cnum num">${v ?? '—'}</div>
+    <div class="cbtns"><button type="button" class="btn" data-adj="${key}:-1">−1</button><button type="button" class="btn primary" data-adj="${key}:1">＋1</button></div>
+    <input type="number" min="0" inputmode="numeric" class="num" data-set="${key}" value="${v ?? ''}" placeholder="直接入力"></div>`;
+  $('#app').innerHTML = `<div class="wrap narrow stack court">
+    <div class="row" style="justify-content:space-between"><div><div class="eyebrow">${esc(EV.kehai.name)}</div><h1>${esc(c.name)}</h1></div><span class="pill">${tm || (live === k ? '試合前' : '')}</span></div>
+    <div class="roundtabs">${[1, 2, 3, 4].map(i => `<button type="button" data-cr="${i}" class="${i === k ? 'on' : ''} ${match(`C${ci}-${i}`).done ? 'full' : ''}">第${i}試合${live === i ? ' ●' : ''}</button>`).join('')}</div>
+    <p class="muted small">試合が終わったら、それぞれの籠に入った玉の数を入れてください。入れた数はすぐに保存されます。</p>
+    <div class="cpair">${side(L, 'a', r.a)}${side(Rt, 'b', r.b)}</div>
+    ${m.tied ? `<div class="warnbox">同じ数です。勝ったチームを選んでください。<div class="row" style="margin-top:6px">
+      <button class="btn sm ${r.tb === 'L' ? 'on' : ''}" data-tb="L" type="button">${esc(L.name)}</button><button class="btn sm ${!r.tb || r.tb === 'D' ? 'on' : ''}" data-tb="D" type="button">引き分け</button><button class="btn sm ${r.tb === 'R' ? 'on' : ''}" data-tb="R" type="button">${esc(Rt.name)}</button></div></div>` : ''}
+    <div class="small">${m.done ? (m.side === 'D' ? '結果：引き分け' : `結果：<b style="color:var(--gold)">${esc(TEAM[m.winner].name)}</b> の勝ち`) : '<span class="muted">両方の玉数を入れると結果が出ます</span>'}</div></div>`;
+  const rec = () => (state.results.kehai[m.id] = state.results.kehai[m.id] || {});
+  $('#app').querySelectorAll('[data-cr]').forEach(b => b.onclick = () => { courtRound = +b.dataset.cr; renderCourt(); });
+  $('#app').querySelectorAll('[data-adj]').forEach(b => b.onclick = () => { const [key, d] = b.dataset.adj.split(':'); const o = rec(); o[key] = Math.max(0, (Number(o[key]) || 0) + Number(d)); o.tb = undefined; save(); renderCourt(); });
+  $('#app').querySelectorAll('[data-set]').forEach(i => i.onchange = () => { const o = rec(); o[i.dataset.set] = i.value === '' ? undefined : Math.max(0, Number(i.value)); o.tb = undefined; save(); renderCourt(); });
+  $('#app').querySelectorAll('[data-tb]').forEach(b => b.onclick = () => { rec().tb = b.dataset.tb; save(); renderCourt(); });
+  clearTimeout(renderCourt.t); if (live === k && p.timerAt) renderCourt.t = setTimeout(() => { if (mode() === 'court' && !(document.activeElement && document.activeElement.matches('input'))) renderCourt(); }, 1000);
 }
 
 /* =====================================================================
