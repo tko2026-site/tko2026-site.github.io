@@ -553,7 +553,9 @@ async function loadDriveAssets() {
   try {
     const d = await apiPost({ a: 'assets', pass: auth.pass });
     if (!d.ok) return;
-    DRIVE = d.files || {};
+    // フォルダの入れ方が違っても（assets ごと入れた等）、bgm/ sfx/ voice/ … からの名前でそろえる
+    DRIVE = {};
+    for (const [k, id] of Object.entries(d.files || {})) DRIVE[k.replace(/^(?:.*\/)?((?:bgm|sfx|voice|victory|teams|bg|video|font)\/[^/]+)$/, '$1')] = id;
     // 音は先に読み込んでおく（本番で鳴るまで待たないように）
     Object.keys(DRIVE).filter(k => /\.mp3$/i.test(k) && !/^bgm\//.test(k)).forEach(k => { const u = R('assets/' + k); if (!audioCache[u]) { const a = new Audio(u); a.preload = 'auto'; a.addEventListener('error', () => { audioCache[u] = false; }); audioCache[u] = a; } });
     toast(`演出用の素材をドライブから読み込みました（${Object.keys(DRIVE).length}件）`);
