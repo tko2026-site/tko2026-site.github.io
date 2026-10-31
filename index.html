@@ -376,9 +376,9 @@ const CONFIG = {
               ] },
   },
   assets: {
-    teamImage: id => `assets/teams/${id}.png`,
-    voice:     id => `assets/voice/${id}.mp3`,
-    victory:   id => `assets/victory/${id}.mp3`,  // 優勝チームの勝利BGM（なければ sfx.win）
+    teamImage: id => R(`assets/teams/${id}.png`),
+    voice:     id => R(`assets/voice/${id}.mp3`),
+    victory:   id => R(`assets/victory/${id}.mp3`),  // 優勝チームの勝利BGM（なければ sfx.win）
     bg:      'assets/bg/main.png',
     logo:    'assets/bg/logo.png',
     opening: 'assets/video/opening.mp4',
@@ -540,7 +540,28 @@ function toast(msg) { const d = document.createElement('div'); d.className = 'to
 // 音声：ファイルがなければ何もしない
 let muted = false;
 const audioCache = {};
+/* 素材の場所：PCのファイルから開いたときは assets/ のファイル。
+   ネット上（GitHub版）で運営としてログインしたときは、Google ドライブに置いた同じ名前のファイルを使う */
+let DRIVE = null;
+function R(src) {
+  if (!DRIVE || !src || !src.startsWith('assets/')) return src;
+  const id = DRIVE[src.slice(7)]; if (!id) return src;
+  return /\.(png|jpe?g|gif|webp|svg)$/i.test(src) ? `https://lh3.googleusercontent.com/d/${id}` : `https://drive.usercontent.google.com/download?id=${id}&export=download`;
+}
+async function loadDriveAssets() {
+  if (!REMOTE || location.protocol === 'file:' || DRIVE || !auth || auth.role !== 'staff') return;
+  try {
+    const d = await apiPost({ a: 'assets', pass: auth.pass });
+    if (!d.ok) return;
+    DRIVE = d.files || {};
+    // 音は先に読み込んでおく（本番で鳴るまで待たないように）
+    Object.keys(DRIVE).filter(k => /\.mp3$/i.test(k) && !/^bgm\//.test(k)).forEach(k => { const u = R('assets/' + k); if (!audioCache[u]) { const a = new Audio(u); a.preload = 'auto'; a.addEventListener('error', () => { audioCache[u] = false; }); audioCache[u] = a; } });
+    toast(`演出用の素材をドライブから読み込みました（${Object.keys(DRIVE).length}件）`);
+    if (mode() === 'present' || mode() === 'admin') { teardownPresent(); rerender(); }
+  } catch (e) { toast('ドライブの素材を読み込めませんでした（音・画像なしで続けます）'); }
+}
 function play(src, vol = 1) {
+  src = R(src);
   if (muted || !src) return;
   try {
     let a = audioCache[src];
@@ -620,7 +641,7 @@ function renderStaffGate() {
     <button class="btn primary" type="submit">入る</button><p class="small" id="smsg"></p></form></div>`;
   $('#staffForm').onsubmit = async e => {
     e.preventDefault(); const pass = $('#spass').value.trim(); $('#smsg').textContent = '確認中…';
-    try { const d = await apiPost({ a: 'staffLogin', pass }); if (d.ok) { setAuth({ role: 'staff', pass }); rerender(); } else { $('#smsg').textContent = '運営パスが違います'; } }
+    try { const d = await apiPost({ a: 'staffLogin', pass }); if (d.ok) { setAuth({ role: 'staff', pass }); rerender(); loadDriveAssets(); } else { $('#smsg').textContent = '運営パスが違います'; } }
     catch (x) { $('#smsg').textContent = '通信できませんでした'; }
   };
 }
@@ -973,7 +994,7 @@ function showHint() { const h = $('#hint'); if (!h) return; h.classList.remove('
 function renderPresent() {
   const app = $('#app');
   if (!P) {
-    app.innerHTML = `<div id="presentRoot"><div id="stage"><img class="bgimg" src="${CONFIG.assets.bg}" alt="" onerror="this.remove()"><div class="stripes"></div><div id="scene"></div>
+    app.innerHTML = `<div id="presentRoot"><div id="stage"><img class="bgimg" src="${R(CONFIG.assets.bg)}" alt="" onerror="this.remove()"><div class="stripes"></div><div id="scene"></div>
       <div class="hint" id="hint">Space：次へ ／ ← 戻る ／ 1〜5：場面 ／ F：全画面 ／ M：消音 ／ Esc：管理へ</div>
       ${P_unlocked ? '' : '<div class="startgate" id="gate"><div>クリックで演出を開始<small>ブラウザの仕様で、一度クリックするまで音が鳴りません</small></div></div>'}</div></div>
       <button class="exitbtn" type="button" onclick="location.hash='#admin'">管理画面へ</button>`;
@@ -1012,14 +1033,14 @@ function applyStep(step) {
 function buildTitle(el) {
   el.innerHTML = `<div class="scene sc-title" id="scTitle"><div class="slash"></div>
     <div style="position:relative;display:flex;flex-direction:column;align-items:center">
-      <img class="logo" src="${CONFIG.assets.logo}" alt="" onload="document.getElementById('scTitle').classList.add('haslogo')" onerror="this.remove()">
+      <img class="logo" src="${R(CONFIG.assets.logo)}" alt="" onload="document.getElementById('scTitle').classList.add('haslogo')" onerror="this.remove()">
       <div class="tt">${esc(CONFIG.eventTitle)}</div><div class="st">${esc(CONFIG.eventSubtitle)}</div></div>
     <div class="press">PRESS SPACE</div></div>`;
 }
 function stepTitle(step, live) {
   const sc = $('#scTitle'); const old = sc.querySelector('video'); if (old) old.remove();
   if (step === 1) {
-    const v = document.createElement('video'); v.src = CONFIG.assets.opening; v.autoplay = true; v.playsInline = true; v.muted = muted;
+    const v = document.createElement('video'); v.src = R(CONFIG.assets.opening); v.autoplay = true; v.playsInline = true; v.muted = muted;
     v.onerror = () => v.remove(); v.onended = () => { v.remove(); };
     sc.appendChild(v); v.play?.().catch(() => {});
   }
@@ -1159,7 +1180,7 @@ function renderViewer() {
 $('#staffOut').onclick = () => { setAuth(null); session = null; rerender(); };
 updateNav();
 rerender();
-if (REMOTE) pollLoop();
+if (REMOTE) { pollLoop(); loadDriveAssets(); }
 </script>
 </body>
 </html>
