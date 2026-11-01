@@ -384,7 +384,7 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 </head>
 <body>
 <nav id="modebar" aria-label="画面切り替え">
-  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1101e</span></span>
+  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1101f</span></span>
   <a href="#register" data-mode="register">チーム登録</a>
   <a href="#admin" data-mode="admin">管理</a>
   <a href="#present" data-mode="present">演出</a>
@@ -392,7 +392,7 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
   <span class="sp"></span>
   <span class="muted small" id="netState"></span>
   <button class="tiny" id="staffOut" type="button" hidden>ログアウト</button>
-  <button class="tiny" id="resetBtn" type="button">データを初期化</button>
+  <button class="tiny" id="resetBtn" type="button" title="出場者の登録は消えません">点数をリセット</button>
 </nav>
 <main id="app"></main>
 
@@ -740,8 +740,13 @@ window.addEventListener('hashchange', () => rerender());
 
 const resetBtn = $('#resetBtn');
 resetBtn.addEventListener('click', () => {
-  if (resetBtn.dataset.armed) { state = blankState(); state.rev = Date.now(); save(); delete resetBtn.dataset.armed; resetBtn.textContent = 'データを初期化'; rerender(); toast('初期化しました'); }
-  else { resetBtn.dataset.armed = '1'; resetBtn.textContent = 'もう一度押すと全データを消去'; setTimeout(() => { delete resetBtn.dataset.armed; resetBtn.textContent = 'データを初期化'; }, 3000); }
+  // 点数（結果）と演出の進み具合だけ戻す。名簿・出場者・提出・締め切り・非表示の設定は残す
+  if (resetBtn.dataset.armed) {
+    const b = blankState(), skip = (state.present && state.present.skip) || {};
+    state.results = b.results; state.present = Object.assign(b.present, { skip });
+    save(); delete resetBtn.dataset.armed; resetBtn.textContent = '点数をリセット'; rerender(); toast('点数をリセットしました（出場者の登録はそのまま）');
+  }
+  else { resetBtn.dataset.armed = '1'; resetBtn.textContent = 'もう一度押すと全種目の点数を消去'; setTimeout(() => { delete resetBtn.dataset.armed; resetBtn.textContent = '点数をリセット'; }, 3000); }
 });
 
 /* =====================================================================
