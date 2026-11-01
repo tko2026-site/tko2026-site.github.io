@@ -201,6 +201,9 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 .ctl{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:16px;align-items:start}
 @media (max-width:900px){.ctl{grid-template-columns:1fr}}
 .runlist{gap:4px}
+.runline{display:flex;gap:6px;align-items:stretch}.runline .runrow{flex:1;min-width:0}
+.skipchk{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);white-space:nowrap;padding:0 6px;cursor:pointer}
+.runline.skip .runrow{opacity:.35;text-decoration:line-through}
 .runrow{display:flex;gap:10px;align-items:center;text-align:left;padding:9px 12px;border-radius:6px;border:1px solid var(--line);background:transparent;color:var(--fg);font-weight:700;font-size:14px;cursor:pointer}
 .runrow .mk{width:18px;flex:none;color:var(--gold)}.runrow.done{color:var(--muted)}.runrow.done .mk{color:var(--ok)}
 .runrow.cur{background:var(--gold);color:#111;border-color:var(--gold)}.runrow.cur .mk{color:#111}
@@ -381,7 +384,7 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 </head>
 <body>
 <nav id="modebar" aria-label="画面切り替え">
-  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1101d</span></span>
+  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1101e</span></span>
   <a href="#register" data-mode="register">チーム登録</a>
   <a href="#admin" data-mode="admin">管理</a>
   <a href="#present" data-mode="present">演出</a>
@@ -468,7 +471,7 @@ const EV = CONFIG.events;
 function blankState() {
   const s = { rev: 0, locked: false, members: {}, entries: {}, submitted: {},
     results: { kariru: Array.from({ length: EV.kariru.rounds }, () => []), relay: [], quiz: {}, kehai: {}, radio: {}, kariruBonus: {}, bonus: [] },
-    present: { scene: 'title', step: 0, match: null, event: 'total', nonce: 0 } };
+    present: { scene: 'title', step: 0, match: null, event: 'total', nonce: 0, skip: {} } };
   for (const t of CONFIG.teams) {
     s.members[t.id] = [];
     s.entries[t.id] = { kariru: Array(EV.kariru.rounds).fill(''), kehai: Array(EV.kehai.battles).fill(''),
@@ -1021,8 +1024,7 @@ function adminScore() {
 
 /* 当日の進行表：上から順に「次へ」で進む */
 const RUN = (() => {
-  const r = [{ label: 'オープニング（タイトル）', scene: 'title' }, { label: 'チーム紹介', scene: 'teams' },
-    { label: '追加点の発表（ラジオ体操など）', scene: 'bonus' }];
+  const r = [{ label: 'オープニング（タイトル）', scene: 'title' }, { label: 'チーム紹介', scene: 'teams' }];
   for (let k = 1; k <= 4; k++) r.push({ label: `${EV.kehai.name} 第${k}試合（A・B同時）`, scene: 'tama', round: k });
   r.push({ label: `${EV.kehai.name} 対戦表`, scene: 'bracket' }, { label: `${EV.kehai.name} 順位発表`, scene: 'rank', event: 'kehai' });
   for (let k = 1; k <= EV.kariru.rounds; k++) r.push({ label: `${EV.kariru.name} 第${k}回`, scene: 'kariru', round: k });
@@ -1043,22 +1045,26 @@ function goRun(i) {
   if (it.event) p.event = it.event;
   save(); if (mode() === 'present') renderPresent();
 }
+// 非表示にした場面は次へ・戻るで飛ばす（行を押せば直接は行ける）
+const skipped = i => !!(RUN[i] && (state.present.skip || {})[RUN[i].label]);
+function nextRun(from, d) { let i = from + d; while (i >= 0 && i < RUN.length && skipped(i)) i += d; return i >= 0 && i < RUN.length ? i : null; }
 function advance(d) {
   const p = state.present;
-  if (p.run == null) { goRun(0); return; }
-  if (d > 0) { if (p.step < maxStep()) stepBy(1); else goRun(p.run + 1); }
-  else { if (p.step > 0) stepBy(-1); else goRun(p.run - 1); }
+  if (p.run == null || p.run >= RUN.length) { const i = nextRun(-1, 1); if (i != null) goRun(i); return; }
+  if (d > 0) { if (p.step < maxStep()) stepBy(1); else { const i = nextRun(p.run, 1); if (i != null) goRun(i); } }
+  else { if (p.step > 0) stepBy(-1); else { const i = nextRun(p.run, -1); if (i != null) goRun(i); } }
 }
 function adminControl() {
-  const p = state.present, cur = p.run ?? -1;
+  const p = state.present, cur = p.run != null && p.run < RUN.length ? p.run : -1;  // 進行表が短くなったときの古い位置は無視
   const site = location.href.split('#')[0].split('?')[0];
   $('#atab').innerHTML = `<div class="ctl">
-    <section class="panel stack runlist"><div class="evhead"><h2>進行表</h2><span class="muted small">行を押すとその場面へ</span></div>
-      ${RUN.map((it, i) => `<button type="button" class="runrow ${i === cur ? 'cur' : ''} ${i < cur ? 'done' : ''}" data-run="${i}"><span class="mk">${i < cur ? '✓' : i === cur ? '▶' : ''}</span>${esc(it.label)}</button>`).join('')}</section>
+    <section class="panel stack runlist"><div class="evhead"><h2>進行表</h2><span class="muted small">行を押すとその場面へ／「非表示」は次へで飛ばす</span></div>
+      ${RUN.map((it, i) => `<div class="runline ${skipped(i) ? 'skip' : ''}"><button type="button" class="runrow ${i === cur ? 'cur' : ''} ${i < cur ? 'done' : ''}" data-run="${i}"><span class="mk">${i < cur ? '✓' : i === cur ? '▶' : ''}</span>${esc(it.label)}</button>
+        <label class="skipchk"><input type="checkbox" data-skip="${i}" ${skipped(i) ? 'checked' : ''}>非表示</label></div>`).join('')}</section>
     <section class="panel stack ctlside">
       <div class="nowbox"><div class="eyebrow">いま</div><div class="nowlab">${cur >= 0 ? esc(RUN[cur].label) : '（まだ始まっていません）'}</div><div class="muted small">${esc(cur >= 0 ? stepLabel() : '')}</div></div>
       <div class="row" style="flex-wrap:nowrap"><button class="btn" type="button" id="runPrev" style="flex:1">◀ 戻る</button><button class="btn primary big" type="button" id="runNext" style="flex:2">次へ ▶ <kbd>Space</kbd></button></div>
-      <div class="muted small">次へを押すと：${cur < 0 ? esc(RUN[0].label) : p.step < maxStep() ? '同じ場面の続き' : cur + 1 < RUN.length ? esc(RUN[cur + 1].label) : '（最後です）'}</div>
+      <div class="muted small">次へを押すと：${cur < 0 ? esc(RUN[0].label) : p.step < maxStep() ? '同じ場面の続き' : nextRun(cur, 1) != null ? esc(RUN[nextRun(cur, 1)].label) : '（最後です）'}</div>
       <div class="eyebrow" style="margin-top:6px">プロジェクターに映っている画面（音なし）</div>
       <iframe class="adlive" src="${site}?preview=1#present" title="演出画面の確認"></iframe>
       <div class="row small"><a class="btn sm" href="${site}#present" target="_blank" rel="noopener" style="text-decoration:none">演出画面を別ウインドウで開く</a></div>
@@ -1067,6 +1073,11 @@ function adminControl() {
     </section></div>`;
   const at = $('#atab');
   at.querySelectorAll('[data-run]').forEach(b => b.onclick = () => { goRun(+b.dataset.run); adminControl(); });
+  at.querySelectorAll('[data-skip]').forEach(c => c.onchange = () => {
+    const p = state.present; p.skip = p.skip || {};
+    const lab = RUN[+c.dataset.skip].label; if (c.checked) p.skip[lab] = true; else delete p.skip[lab];
+    save(); adminControl();
+  });
   $('#runNext').onclick = () => { advance(1); adminControl(); };
   $('#runPrev').onclick = () => { advance(-1); adminControl(); };
 }
