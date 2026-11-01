@@ -340,6 +340,24 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 .rrow .pt small{font-size:26px;margin-left:6px;color:var(--muted)}
 .rrow.first{background:linear-gradient(90deg,var(--gold) 0%,color-mix(in srgb,var(--tc) 50%,#141b3d) 40%,#141b3d 80%)}
 .rrow.first .rk{color:#0b1024}
+/* 総合順位発表（棒グラフ） */
+.sc-final .fb-legend{position:absolute;left:90px;top:186px;display:flex;gap:26px;font-weight:900;font-size:24px}
+.sc-final .fb-legend span{display:flex;align-items:center;gap:10px;opacity:.3;transition:opacity .4s,transform .4s}
+.sc-final .fb-legend span.on{opacity:1}
+.sc-final .fb-legend span.cur{transform:scale(1.18)}
+.sc-final .fb-legend i{width:26px;height:26px;border-radius:4px}
+.sc-final .fb-rows{position:absolute;left:90px;right:90px;top:250px;height:768px}
+.fbrow{position:absolute;left:0;right:0;height:84px;display:grid;grid-template-columns:80px 76px 280px 1fr 170px;align-items:center;gap:16px;padding:0 20px 0 10px;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 45%,#141b3d) 0%,#141b3d 40%);transition:top 1.2s cubic-bezier(.5,0,.2,1)}
+.fbrow .rk{font-family:var(--f-display);font-size:50px;text-align:center}
+.fbrow .timg{width:68px;height:68px;--fs:28px}
+.fbrow .nm{font-family:var(--f-display);font-size:38px;white-space:nowrap;overflow:hidden}
+.fbrow .track{height:52px;display:flex;background:rgba(255,255,255,.06)}
+.fbrow .seg{width:0;height:100%;overflow:hidden;display:flex;align-items:center;justify-content:center;transition:width 1.1s cubic-bezier(.2,.9,.3,1)}
+.fbrow .seg span{font-weight:900;font-size:24px;color:#0b1024;white-space:nowrap}
+.fbrow .tot{font-family:var(--f-display);font-size:54px;text-align:right}
+.fbrow.first{background:linear-gradient(90deg,var(--gold) 0%,color-mix(in srgb,var(--tc) 45%,#141b3d) 30%,#141b3d 60%)}
+.fbrow.first .rk{color:#0b1024}
 .winner{position:absolute;inset:0;z-index:20;display:grid;place-items:center;background:radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--tc) 70%,transparent) 0%,rgba(5,8,20,.92) 60%);animation:fadeIn .4s both}
 .winner .in{display:flex;flex-direction:column;align-items:center;gap:6px}
 .winner .timg{width:560px;height:560px;--fs:220px;animation:picIn .7s .1s both}
@@ -362,7 +380,7 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 </head>
 <body>
 <nav id="modebar" aria-label="画面切り替え">
-  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1101b</span></span>
+  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1101c</span></span>
   <a href="#register" data-mode="register">チーム登録</a>
   <a href="#admin" data-mode="admin">管理</a>
   <a href="#present" data-mode="present">演出</a>
@@ -1006,8 +1024,8 @@ const RUN = (() => {
   for (let k = 1; k <= EV.kariru.rounds; k++) r.push({ label: `${EV.kariru.name} 第${k}回`, scene: 'kariru', round: k });
   r.push({ label: `${EV.kariru.name} 順位発表`, scene: 'rank', event: 'kariru' },
     { label: `${EV.relay.name} 種目紹介`, scene: 'relay' }, { label: `${EV.relay.name} 順位発表`, scene: 'rank', event: 'relay' },
-    { label: '追加点の発表（その時点まで）', scene: 'bonus' }, { label: '中間順位（クイズの前）', scene: 'rank', event: 'total' }, { label: 'クイズ（クイズの画面に切り替える）', scene: 'quiz' },
-    { label: '総合順位発表 → 優勝', scene: 'rank', event: 'total' });
+    { label: '追加点の発表（その時点まで）', scene: 'bonus' }, { label: 'クイズ（クイズの画面に切り替える）', scene: 'quiz' },
+    { label: '総合順位発表（棒グラフ）→ 優勝', scene: 'finalbars' });
   return r;
 })();
 const STEPLABEL = { title: ['タイトル', 'オープニング映像'], teams: i => i ? `${i} / ${CONFIG.teams.length} チーム紹介済み` : '全チーム表示',
@@ -1086,7 +1104,7 @@ function fitStage() { const s = Math.min(innerWidth / 1920, innerHeight / 1080);
 function setScene(sc) { const p = state.present; p.scene = sc; p.step = 0; p.nonce++; if (sc === 'vs' && !p.match) p.match = nextMatchId(); save(); if (mode() === 'present') renderPresent(); }
 function maxStep() {
   const p = state.present;
-  return { title: 1, teams: CONFIG.teams.length, bracket: 0, vs: EV.kehai.battles, rank: CONFIG.teams.length, tama: 2, kariru: 1, relay: 0, quiz: 0, bonus: 0 }[p.scene] ?? 0;
+  return { title: 1, teams: CONFIG.teams.length, bracket: 0, vs: EV.kehai.battles, rank: CONFIG.teams.length, tama: 2, kariru: 1, relay: 0, quiz: 0, bonus: 0, finalbars: FB_EVENTS.length + 1 }[p.scene] ?? 0;
 }
 function stepBy(d) {
   const p = state.present; p.step = Math.max(0, Math.min(maxStep(), p.step + d));
@@ -1127,7 +1145,7 @@ function renderPresent() {
     P.timers.forEach(clearTimeout); P.timers = [];
     P.key = key; P.step = -1;
     sceneEl.innerHTML = '';
-    ({ title: buildTitle, teams: buildTeams, bracket: buildBracket, vs: buildVS, rank: buildRank, tama: buildTama, kariru: buildKariru, relay: buildRelay, quiz: buildQuiz, bonus: buildBonus })[p.scene](sceneEl);
+    ({ title: buildTitle, teams: buildTeams, bracket: buildBracket, vs: buildVS, rank: buildRank, tama: buildTama, kariru: buildKariru, relay: buildRelay, quiz: buildQuiz, bonus: buildBonus, finalbars: buildFinal })[p.scene](sceneEl);
   } else if (p.scene === 'bracket') { buildBracket(sceneEl); }
   else if (p.scene === 'tama') { updateTama(); }
   else if (p.scene === 'kariru') { updateKariru(); }
@@ -1146,6 +1164,7 @@ function applyStep(step) {
   if (sc === 'teams') stepTeams(step, live);
   if (sc === 'vs') stepVS(step, live);
   if (sc === 'rank') stepRank(step, live, prev);
+  if (sc === 'finalbars') stepFinal(step, live);
   if (sc === 'tama') stepTama(step, live);
   if (sc === 'kariru') updateKariru(live);
 }
@@ -1361,6 +1380,62 @@ function stepRank(step, live, prev) {
   }
 }
 
+/* 総合順位発表（棒グラフ）：次へで種目ごとに色の帯が伸び、最後に並べ替えて優勝を出す */
+const FB_EVENTS = [
+  { k: 'radio', label: EV.radio.name, color: '#b388ff' },
+  { k: 'kehai', label: EV.kehai.name, color: '#ff8a3d' },
+  { k: 'kariru', label: EV.kariru.name, color: '#3ddc97' },
+  { k: 'relay', label: EV.relay.name, color: '#4cc9f0' },
+  { k: 'quiz', label: EV.quiz.name, color: '#ffd23f' },
+];
+const FB_ROW = 96;
+function buildFinal(el) {
+  const pts = eventPoints(), max = Math.max(1, ...CONFIG.teams.map(t => pts[t.id].total));
+  el.innerHTML = `<div class="scene sc-final" id="scFinal"><div class="band"><span class="en">FINAL RESULT</span><span class="ja">総合順位発表</span></div>
+    <div class="fb-legend">${FB_EVENTS.map((e, i) => `<span id="fbl${i}"><i style="background:${e.color}"></i>${esc(e.label)}</span>`).join('')}</div>
+    <div class="fb-rows">${CONFIG.teams.map((t, i) => `<div class="fbrow" id="fb_${t.id}" style="--tc:${t.color};top:${i * FB_ROW}px">
+      <span class="rk"></span>${timg(t)}<span class="nm">${esc(t.name)}</span>
+      <div class="track">${FB_EVENTS.map(e => `<div class="seg" style="background:${e.color}"><span class="num">${pts[t.id][e.k] / max >= .05 ? pts[t.id][e.k] : ''}</span></div>`).join('')}</div>
+      <span class="tot num">0</span></div>`).join('')}</div>
+    <div id="winLayer"></div></div>`;
+  P.fb = { pts, max };
+}
+function countUp(el, from, to, ms) {
+  if (from === to) { el.textContent = to; return; }
+  const t0 = performance.now();
+  const tick = now => { const k = Math.min(1, (now - t0) / ms); el.textContent = Math.round(from + (to - from) * k); if (k < 1 && el.isConnected) requestAnimationFrame(tick); };
+  requestAnimationFrame(tick);
+}
+function stepFinal(step, live) {
+  if (!P.fb) return;
+  const { pts, max } = P.fb, n = FB_EVENTS.length, shown = Math.min(step, n), done = step > n;
+  FB_EVENTS.forEach((e, i) => { const l = $('#fbl' + i); if (l) { l.classList.toggle('on', i < shown); l.classList.toggle('cur', i === shown - 1 && !done); } });
+  // 最後の段階だけ点数順に並べ替える（同点は同順位）
+  const order = done ? CONFIG.teams.map(t => ({ t, pt: pts[t.id].total })).sort((a, b) => b.pt - a.pt) : CONFIG.teams.map(t => ({ t, pt: 0 }));
+  order.forEach((r, i) => { r.rank = done && i > 0 && r.pt === order[i - 1].pt ? order[i - 1].rank : i + 1; });
+  order.forEach((r, i) => {
+    const row = $('#fb_' + r.t.id); if (!row) return;
+    row.style.top = (i * FB_ROW) + 'px';
+    row.classList.toggle('first', done && r.rank === 1);
+    row.querySelector('.rk').textContent = done ? r.rank : '';
+    row.querySelectorAll('.seg').forEach((sg, k) => { sg.style.width = k < shown ? (pts[r.t.id][FB_EVENTS[k].k] / max * 100) + '%' : '0%'; });
+    const sum = FB_EVENTS.slice(0, shown).reduce((a, e) => a + pts[r.t.id][e.k], 0), tot = row.querySelector('.tot');
+    if (live && !done) countUp(tot, Number(tot.textContent) || 0, sum, 1100); else tot.textContent = sum;
+  });
+  const wl = $('#winLayer'); if (wl) wl.innerHTML = '';
+  if (live && step > 0 && !done) play(CONFIG.assets.sfx.reveal, .8);
+  if (done && live && order[0]) {
+    play(CONFIG.assets.sfx.reveal, .8);
+    const t = order[0].t;
+    later(() => {
+      const conf = Array.from({ length: 90 }, () => `<i style="left:${Math.random() * 100}%;background:${['#ffd23f', '#ff4057', '#fff', t.color, '#3ddc97'][Math.floor(Math.random() * 5)]};animation-duration:${2.5 + Math.random() * 2.5}s;animation-delay:${Math.random() * 1.2}s"></i>`).join('');
+      wl.innerHTML = `<div class="winner" style="--tc:${t.color}"><div class="in">${timg(t)}<div class="lab">WINNER</div><div class="nm">${esc(t.name)}</div></div></div><div class="confetti">${conf}</div>`;
+      play(CONFIG.assets.voice(t.id)); later(() => playVictory(t.id), 1200);
+      wl.querySelector('.winner').onclick = () => { wl.innerHTML = ''; };  // クリックで棒グラフに戻る
+    }, 2600);  // 並べ替えを見せてから
+  }
+}
+
 /* =====================================================================
    係用：人間玉入れのコート入力（#court/1, #court/2）
    ===================================================================== */
@@ -1396,7 +1471,6 @@ function renderCourt() {
    4. 観戦画面（全員用・スマホ想定・閲覧のみ）
    ===================================================================== */
 function renderViewer() {
-  const rk = ranking(), pts = eventPoints();
   const nm = match(nextMatchId());
   const mline = m => {
     const L = TEAM[m.L], R = TEAM[m.R], c = id => m.winner ? (m.winner === id ? 'w' : 'l') : '';
@@ -1406,8 +1480,6 @@ function renderViewer() {
     <div><div class="eyebrow">LIVE</div><h1>${esc(CONFIG.eventTitle)} ${esc(CONFIG.eventSubtitle)}</h1><p class="muted small">結果が入ると自動で更新されます。</p></div>
     ${!nm.done ? `<section class="vhero"><div class="eyebrow">次の対戦　${esc(EV.kehai.name)} ${esc(nm.def.label)}</div>
       <div class="vs-mini"><div class="side">${timg(TEAM[nm.L])}${esc(TEAM[nm.L].name)}</div><span class="v">VS</span><div class="side">${timg(TEAM[nm.R])}${esc(TEAM[nm.R].name)}</div></div></section>` : ''}
-    <section class="panel"><div class="evhead"><h2>総合順位</h2><span class="muted small">pt</span></div>
-      ${rk.map(r => `<div class="rankrow ${r.rank === 1 && r.pt > 0 ? 'top' : ''}"><span class="rk">${r.rank}</span>${timg(r.t)}<span><b>${esc(r.t.name)}</b><br><span class="muted small num">${EV.radio.short}${pts[r.t.id].radio}・${EV.kehai.short}${pts[r.t.id].kehai}・借${pts[r.t.id].kariru}・障${pts[r.t.id].relay}・ク${pts[r.t.id].quiz}</span></span><span class="score num">${r.pt}</span></div>`).join('')}</section>
     <section class="panel stack"><h2>${esc(EV.kehai.name)} 対戦表</h2>
       ${EV.kehai.courts.map(c => `<div class="stack" style="gap:6px"><span class="eyebrow">${esc(c.name)}</span><div class="mlist">${MATCHES.filter(d => d.court === c.name).map(d => mline(match(d.id))).join('')}</div></div>`).join('')}</section>
     <section class="panel stack"><h2>${esc(EV.kariru.name)}</h2>
