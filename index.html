@@ -233,6 +233,7 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 .kc .kr{position:absolute;top:10px;right:14px;font-family:var(--f-display);font-size:60px;line-height:1;color:var(--gold)}.kc .kr small{font-size:26px}.kc .kr em{display:block;font-style:normal;font-size:26px;text-align:right;color:#fff}
 .kc.top{box-shadow:0 0 50px var(--tc);transform:scale(1.04)}.kc.dim{filter:grayscale(1) brightness(.5)}
 /* 演出：追加点 */
+.dots i{animation:blink 1.4s infinite both}.dots i:nth-child(2){animation-delay:.2s}.dots i:nth-child(3){animation-delay:.4s}
 .sc-bonus .blist{position:absolute;left:120px;right:120px;top:210px;bottom:60px;display:grid;grid-template-columns:1fr 1fr;gap:20px 40px;align-content:start}
 .bcard{display:flex;align-items:center;gap:22px;padding:18px 26px;border-radius:14px;background:#18214d;border:4px solid var(--tc)}
 .bcard .timg{width:110px;height:110px;flex:none;--fs:46px}.bcard .bx{flex:1;min-width:0}.bcard .bx small{display:block;font-size:28px;color:#c6cdf0;font-weight:900}
@@ -380,7 +381,7 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 </head>
 <body>
 <nav id="modebar" aria-label="画面切り替え">
-  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1101c</span></span>
+  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1101d</span></span>
   <a href="#register" data-mode="register">チーム登録</a>
   <a href="#admin" data-mode="admin">管理</a>
   <a href="#present" data-mode="present">演出</a>
@@ -421,8 +422,8 @@ const CONFIG = {
               points: { win: 20, draw: 10, lose: 0 },
               // 企画班の対戦表どおり（同じ番号の試合は2コート同時）
               courts: [
-                { name: '1コート', matches: [['pikachu', 'kirby'], ['dk', 'yoshi'], ['fox', 'mario'], ['link', 'samus']] },
-                { name: '2コート', matches: [['fox', 'kirby'], ['link', 'yoshi'], ['pikachu', 'mario'], ['dk', 'samus']] },
+                { name: 'Aコート', matches: [['pikachu', 'kirby'], ['dk', 'yoshi'], ['fox', 'mario'], ['link', 'samus']] },
+                { name: 'Bコート', matches: [['fox', 'kirby'], ['link', 'yoshi'], ['pikachu', 'mario'], ['dk', 'samus']] },
               ] },
     quiz:   { name: 'クイズ', max: 100 },
     // その他の追加点（ラジオ体操のベストチーム、当日のファッションポイントなど）。内部の名前は radio のまま
@@ -939,7 +940,7 @@ function adminResults() {
     <section class="panel stack"><div class="evhead"><h2>${EV.radio.name}</h2><span class="muted small">ラジオ体操のベストチーム、ファッションポイントなど。何件でも足せます</span></div>
       <div class="row" style="align-items:flex-end">
         <label class="fld" style="flex:2;min-width:160px">理由<input type="text" id="bnLabel" list="bnReasons" placeholder="例：ラジオ体操"><datalist id="bnReasons">${EV.radio.reasons.map(r => `<option value="${esc(r)}">`).join('')}</datalist></label>
-        <label class="fld" style="flex:1.5;min-width:130px">チーム<select id="bnTeam"><option value="">— 選択 —</option>${CONFIG.teams.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('')}</select></label>
+        <div style="flex:3;min-width:220px;display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)"><span>チーム（複数可）</span><div class="row small" style="gap:4px 10px">${CONFIG.teams.map(t => `<label style="display:inline-flex;gap:4px;align-items:center"><input type="checkbox" data-bnt="${t.id}"><span class="tdot" style="--tc:${t.color}"></span>${esc(t.name)}</label>`).join('')}</div></div>
         <label class="fld" style="width:90px">点数<input type="number" id="bnPt" value="${EV.radio.points}" class="num"></label>
         <button class="btn primary" type="button" id="bnAdd">追加</button></div>
       <div class="stack" style="gap:6px">${state.results.bonus.length ? state.results.bonus.map((b, i) => `<div class="row" style="justify-content:space-between;padding:6px 10px;border:1px solid var(--line);border-radius:6px">
@@ -961,9 +962,12 @@ function adminResults() {
   bindOrder($('#krBox'), () => state.results.kariru[krRound], () => { save(); adminResults(); });
   bindOrder($('#rlBox'), () => state.results.relay, () => { save(); adminResults(); });
   $('#bnAdd').onclick = () => {
-    const label = $('#bnLabel').value.trim() || '追加点', team = $('#bnTeam').value, pt = Number($('#bnPt').value) || 0;
-    if (!team) { toast('チームを選んでください'); return; }
-    state.results.bonus.push({ label, team, pt, at: Date.now() }); save(); adminResults(); toast(`${TEAM[team].name}に「${label}」+${pt}点`);
+    const label = $('#bnLabel').value.trim() || '追加点', pt = Number($('#bnPt').value) || 0;
+    const teams = [...at.querySelectorAll('[data-bnt]:checked')].map(i => i.dataset.bnt);
+    if (!teams.length) { toast('チームを選んでください'); return; }
+    if (!pt) { toast('点数を入れてください'); return; }
+    teams.forEach(team => state.results.bonus.push({ label, team, pt, at: Date.now() })); save(); adminResults();
+    toast(`${teams.map(id => TEAM[id].name).join('・')}に「${label}」${pt > 0 ? '+' : ''}${pt}点`);
   };
   at.querySelectorAll('[data-bndel]').forEach(b => b.onclick = () => { state.results.bonus.splice(+b.dataset.bndel, 1); save(); adminResults(); });
   at.querySelectorAll('[data-krb]').forEach(i => i.onchange = () => { state.results.kariruBonus[i.dataset.krb] = i.checked; save(); });
@@ -1019,18 +1023,18 @@ function adminScore() {
 const RUN = (() => {
   const r = [{ label: 'オープニング（タイトル）', scene: 'title' }, { label: 'チーム紹介', scene: 'teams' },
     { label: '追加点の発表（ラジオ体操など）', scene: 'bonus' }];
-  for (let k = 1; k <= 4; k++) r.push({ label: `${EV.kehai.name} 第${k}試合（2コート同時）`, scene: 'tama', round: k });
+  for (let k = 1; k <= 4; k++) r.push({ label: `${EV.kehai.name} 第${k}試合（A・B同時）`, scene: 'tama', round: k });
   r.push({ label: `${EV.kehai.name} 対戦表`, scene: 'bracket' }, { label: `${EV.kehai.name} 順位発表`, scene: 'rank', event: 'kehai' });
   for (let k = 1; k <= EV.kariru.rounds; k++) r.push({ label: `${EV.kariru.name} 第${k}回`, scene: 'kariru', round: k });
   r.push({ label: `${EV.kariru.name} 順位発表`, scene: 'rank', event: 'kariru' },
     { label: `${EV.relay.name} 種目紹介`, scene: 'relay' }, { label: `${EV.relay.name} 順位発表`, scene: 'rank', event: 'relay' },
-    { label: '追加点の発表（その時点まで）', scene: 'bonus' }, { label: 'クイズ（クイズの画面に切り替える）', scene: 'quiz' },
-    { label: '総合順位発表（棒グラフ）→ 優勝', scene: 'finalbars' });
+    { label: 'クイズ（クイズの画面に切り替える）', scene: 'quiz' }, { label: '集計中（17:20〜 閉会式まで）', scene: 'tally' },
+    { label: '閉会式：追加点の発表（全部）', scene: 'bonus' }, { label: '閉会式：総合順位発表（棒グラフ）→ 優勝', scene: 'finalbars' });
   return r;
 })();
 const STEPLABEL = { title: ['タイトル', 'オープニング映像'], teams: i => i ? `${i} / ${CONFIG.teams.length} チーム紹介済み` : '全チーム表示',
   rank: i => i ? `${i} / ${CONFIG.teams.length} 位まで公開` : '順位は伏せた状態', tama: ['対戦カード', 'カウントダウン → 試合中', '結果表示'],
-  kariru: ['出走者', '結果'], bracket: ['表示中'], relay: ['表示中'], quiz: ['表示中'], bonus: ['表示中'] };
+  kariru: ['出走者', '結果'], bracket: ['表示中'], relay: ['表示中'], quiz: ['表示中'], bonus: ['表示中'], tally: ['表示中'] };
 function stepLabel() { const p = state.present, f = STEPLABEL[p.scene]; return typeof f === 'function' ? f(p.step) : (f || [])[p.step] || ''; }
 function goRun(i) {
   i = Math.max(0, Math.min(RUN.length - 1, i));
@@ -1104,7 +1108,7 @@ function fitStage() { const s = Math.min(innerWidth / 1920, innerHeight / 1080);
 function setScene(sc) { const p = state.present; p.scene = sc; p.step = 0; p.nonce++; if (sc === 'vs' && !p.match) p.match = nextMatchId(); save(); if (mode() === 'present') renderPresent(); }
 function maxStep() {
   const p = state.present;
-  return { title: 1, teams: CONFIG.teams.length, bracket: 0, vs: EV.kehai.battles, rank: CONFIG.teams.length, tama: 2, kariru: 1, relay: 0, quiz: 0, bonus: 0, finalbars: FB_EVENTS.length + 1 }[p.scene] ?? 0;
+  return { title: 1, teams: CONFIG.teams.length, bracket: 0, vs: EV.kehai.battles, rank: CONFIG.teams.length, tama: 2, kariru: 1, relay: 0, quiz: 0, bonus: 0, tally: 0, finalbars: FB_EVENTS.length + 1 }[p.scene] ?? 0;
 }
 function stepBy(d) {
   const p = state.present; p.step = Math.max(0, Math.min(maxStep(), p.step + d));
@@ -1145,7 +1149,7 @@ function renderPresent() {
     P.timers.forEach(clearTimeout); P.timers = [];
     P.key = key; P.step = -1;
     sceneEl.innerHTML = '';
-    ({ title: buildTitle, teams: buildTeams, bracket: buildBracket, vs: buildVS, rank: buildRank, tama: buildTama, kariru: buildKariru, relay: buildRelay, quiz: buildQuiz, bonus: buildBonus, finalbars: buildFinal })[p.scene](sceneEl);
+    ({ title: buildTitle, teams: buildTeams, bracket: buildBracket, vs: buildVS, rank: buildRank, tama: buildTama, kariru: buildKariru, relay: buildRelay, quiz: buildQuiz, bonus: buildBonus, tally: buildTally, finalbars: buildFinal })[p.scene](sceneEl);
   } else if (p.scene === 'bracket') { buildBracket(sceneEl); }
   else if (p.scene === 'tama') { updateTama(); }
   else if (p.scene === 'kariru') { updateKariru(); }
@@ -1250,6 +1254,10 @@ function buildBonus(el, update) {
   if (fresh > 0) play(CONFIG.assets.sfx.reveal, .9);
 }
 /* クイズ：クイズの画面に切り替える前の表示 */
+function buildTally(el) {
+  el.innerHTML = `<div class="scene sc-title"><div class="slash"></div><div style="position:relative;display:flex;flex-direction:column;align-items:center">
+    <div class="tt">集計中<span class="dots"><i>.</i><i>.</i><i>.</i></span></div><div class="st">まもなく閉会式です</div></div></div>`;
+}
 function buildQuiz(el) {
   el.innerHTML = `<div class="scene sc-title"><div class="slash"></div><div style="position:relative;display:flex;flex-direction:column;align-items:center">
     <div class="tt">QUIZ</div><div class="st">クイズの画面に切り替えます</div></div></div>`;
@@ -1382,11 +1390,11 @@ function stepRank(step, live, prev) {
 
 /* 総合順位発表（棒グラフ）：次へで種目ごとに色の帯が伸び、最後に並べ替えて優勝を出す */
 const FB_EVENTS = [
-  { k: 'radio', label: EV.radio.name, color: '#b388ff' },
   { k: 'kehai', label: EV.kehai.name, color: '#ff8a3d' },
   { k: 'kariru', label: EV.kariru.name, color: '#3ddc97' },
   { k: 'relay', label: EV.relay.name, color: '#4cc9f0' },
   { k: 'quiz', label: EV.quiz.name, color: '#ffd23f' },
+  { k: 'radio', label: EV.radio.name, color: '#b388ff' },
 ];
 const FB_ROW = 96;
 function buildFinal(el) {
