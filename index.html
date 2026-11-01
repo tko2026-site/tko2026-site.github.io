@@ -362,7 +362,7 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 </head>
 <body>
 <nav id="modebar" aria-label="画面切り替え">
-  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1101a</span></span>
+  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1101b</span></span>
   <a href="#register" data-mode="register">チーム登録</a>
   <a href="#admin" data-mode="admin">管理</a>
   <a href="#present" data-mode="present">演出</a>
@@ -792,13 +792,11 @@ function renderRegister() {
       en.kariru = en.kariru.map(keep); en.kehai = en.kehai.map(keep); en.relay = en.relay.map(a => a.map(keep));
       save(); renderRegister(); toast('名簿を反映しました');
     };
-    // 選んだら、画面のすべての選択欄をいまのデータにまとめて書き込む（保存の行き違いで取りこぼさないように）
+    // 変えた枠だけを、いまのデータに書き込む（保存のたびに state が新しくなるので毎回取り直す。
+    // 同じチームを2台で同時に直しても、別の枠なら消し合わない）
     $('#app').querySelectorAll('select[data-ev]').forEach(s => s.onchange = () => {
-      const en = state.entries[t.id];
-      $('#app').querySelectorAll('select[data-ev]').forEach(x => {
-        const ev = x.dataset.ev, i = +x.dataset.i;
-        if (ev === 'relay') en.relay[i][+x.dataset.j] = x.value; else en[ev][i] = x.value;
-      });
+      const en = state.entries[t.id], ev = s.dataset.ev, i = +s.dataset.i;
+      if (ev === 'relay') en.relay[i][+s.dataset.j] = s.value; else en[ev][i] = s.value;
       save(); renderChecks();
     });
     $('#submitBtn').onclick = () => {
