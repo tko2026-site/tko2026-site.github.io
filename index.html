@@ -362,7 +362,7 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 </head>
 <body>
 <nav id="modebar" aria-label="画面切り替え">
-  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1031c</span></span>
+  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1101a</span></span>
   <a href="#register" data-mode="register">チーム登録</a>
   <a href="#admin" data-mode="admin">管理</a>
   <a href="#present" data-mode="present">演出</a>
@@ -766,7 +766,7 @@ function renderRegister() {
     <section class="panel stack"><div class="evhead"><h2>${EV.kariru.name}</h2><span class="muted small">5分 × ${EV.kariru.rounds}回。各回に1人</span></div>
       ${en.kariru.map((v, i) => `<div class="slot"><span class="lab">第${i + 1}回</span><select id="kr${i}" data-ev="kariru" data-i="${i}" ${ro ? 'disabled' : ''}>${opts(v)}</select></div>`).join('')}</section>
 
-    <section class="panel stack"><div class="evhead"><h2>${EV.kehai.name}</h2><span class="muted small">2チームずつのトーナメント。${EV.kehai.slot}を${EV.kehai.battles}人決める（球が当たっても平気な人）</span></div>
+    <section class="panel stack"><div class="evhead"><h2>${EV.kehai.name}</h2><span class="muted small">2チームずつ対戦（${EV.kehai.minutes}分）。${EV.kehai.slot}を${EV.kehai.battles}人決める（球が当たっても平気な人）</span></div>
       ${en.kehai.map((v, i) => `<div class="slot"><span class="lab">${EV.kehai.battles > 1 ? `${EV.kehai.slot}${i + 1}` : EV.kehai.slot}</span><select id="kh${i}" data-ev="kehai" data-i="${i}" ${ro ? 'disabled' : ''}>${opts(v)}</select></div>`).join('')}</section>
 
     <section class="panel stack"><div class="evhead"><h2>${EV.relay.name}</h2><span class="muted small">全${EV.relay.legs.length}走・${EV.relay.legs.reduce((a, l) => a + l.people, 0)}人</span></div>
