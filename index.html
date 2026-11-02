@@ -362,6 +362,34 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 .fbrow .tot{font-family:var(--f-display);font-size:54px;text-align:right}
 .fbrow.first{background:linear-gradient(90deg,var(--gold) 0%,color-mix(in srgb,var(--tc) 45%,#141b3d) 30%,#141b3d 60%)}
 .fbrow.first .rk{color:#0b1024}
+/* 背景を暗くして文字を読みやすく */
+#stage .bgdim{position:absolute;inset:0;z-index:0;background:linear-gradient(180deg,rgba(5,8,20,.35),rgba(5,8,20,.55))}
+/* 開会式・閉会式のスライド */
+.sc-slide [style*="--d"]{opacity:0;animation:fadeUp2 .45s var(--d) cubic-bezier(.2,.9,.2,1) forwards}
+@keyframes fadeUp2{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+.sl-toc{position:absolute;left:150px;right:150px;top:260px;display:grid;grid-template-columns:1fr 1fr;grid-auto-flow:column;grid-template-rows:repeat(3,auto);gap:34px 80px}
+.sl-toc div{display:flex;align-items:center;gap:26px;font-weight:900;font-size:50px;white-space:nowrap;color:rgba(255,255,255,.55);padding:14px 28px;background:rgba(11,16,36,.72);border-left:10px solid rgba(255,255,255,.25)}
+.sl-toc div b{font-family:var(--f-display);font-size:64px}
+.sl-toc div.on{color:#0b1024;background:var(--gold);border-left-color:#fff}
+.sl-sched{position:absolute;left:260px;right:260px;top:230px;display:flex;flex-direction:column;gap:18px}
+.sl-sched div{display:grid;grid-template-columns:260px 1fr auto;align-items:center;gap:30px;background:rgba(11,16,36,.78);padding:14px 36px;font-weight:900;font-size:52px}
+.sl-sched b{font-family:var(--f-display);font-size:60px;color:var(--gold)}
+.sl-sched small{font-size:32px;color:rgba(255,255,255,.7)}
+.sl-pts{position:absolute;left:160px;right:160px;top:230px;display:flex;flex-direction:column;gap:18px}
+.sl-pts div{display:grid;grid-template-columns:330px 1fr;align-items:center;gap:30px;background:rgba(11,16,36,.8);padding:18px 36px}
+.sl-pts b{font-weight:900;font-size:46px;color:var(--gold)}
+.sl-pts span{font-weight:700;font-size:40px;display:flex;flex-direction:column}
+.sl-pts small{font-size:30px;color:rgba(255,255,255,.75)}
+.sl-list{position:absolute;left:260px;right:260px;top:260px;display:flex;flex-direction:column;gap:24px}
+.sl-list div{background:rgba(11,16,36,.8);border-left:12px solid var(--gold);padding:18px 40px;font-weight:900;font-size:56px}
+.sl-list.big{top:300px;left:100px;right:100px;align-items:center}.sl-list.big div{font-size:76px;border-left:0;text-align:center;padding:24px 70px}
+.sl-big{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px}
+.sl-big .en{font-family:var(--f-display);font-size:64px;letter-spacing:.2em;color:var(--gold);animation:fadeIn .5s both}
+.sl-big .main{font-family:var(--f-display);font-size:190px;line-height:1.1;color:#fff;-webkit-text-stroke:8px #0b1024;paint-order:stroke fill;transform:skewX(-8deg);animation:popIn .6s .15s both}
+.sl-big .main.team{color:var(--tc)}
+.sl-big .sub{background:#0b1024;color:var(--gold);font-family:var(--f-display);font-size:58px;padding:8px 40px;transform:skewX(-8deg);animation:fadeUp .5s .6s both}
+.sc-video{background:#000}.sc-video video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+.sc-video .vmsg{position:absolute;inset:0;display:grid;place-items:center;font-size:40px;font-weight:900;color:#fff;padding:0 200px;text-align:center}
 .winner{position:absolute;inset:0;z-index:20;display:grid;place-items:center;background:radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--tc) 70%,transparent) 0%,rgba(5,8,20,.92) 60%);animation:fadeIn .4s both}
 .winner .in{display:flex;flex-direction:column;align-items:center;gap:6px}
 .winner .timg{width:560px;height:560px;--fs:220px;animation:picIn .7s .1s both}
@@ -384,7 +412,7 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 </head>
 <body>
 <nav id="modebar" aria-label="画面切り替え">
-  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1101f</span></span>
+  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1102a</span></span>
   <a href="#register" data-mode="register">チーム登録</a>
   <a href="#admin" data-mode="admin">管理</a>
   <a href="#present" data-mode="present">演出</a>
@@ -440,16 +468,26 @@ const CONFIG = {
                 { task: 'ぐるぐるバット', desc: '続けるのが難しいと判断したら、次の走者が30秒待ってから再開', people: 1, baton: 'バット' },
                 { task: '風船バッティング', desc: 'バットで風船を打ち、次の走者に取ってもらう（次の走者は動かず腕だけ伸ばす）。落としたらスタート地点から', people: 1, baton: '風船' },
                 { task: 'チンチロ', desc: 'お椀にサイコロ2つを投げ、ゾロ目でクリア（お椀の外のゾロ目は無効）', people: 1 },
-                { task: '全力疾走', desc: '100m全力で走る', people: 1 },
+                { task: '全力疾走', desc: '20m全力で走る', people: 1 },
               ] },
+  },
+  // 開会式・閉会式のスライドの中身（ここを書き換えれば画面に反映される）
+  ceremony: {
+    schedule: [['14:45', 'ラジオ体操', 'Aコート'], ['15:00', '人間玉入れ', 'A・Bコート'], ['15:45', '借り人競争', 'Bコート'],
+               ['16:35', '障害物競走', 'Bコート'], ['17:00', 'クイズ', 'Bコート'], ['17:30', '閉会式', 'Bコート']],
+    prize: ['（優勝商品は準備中）'],
+    cautions: ['水分補給しっかり！', '体調が悪くなったら早めに相談！', 'ケガには気をつけて！', 'ゴミは持ち帰る！', '忘れ物に気をつけよう！'],
+    party: ['19:30〜 打ち上げ', '詳しくはチャットを見てください'],
   },
   assets: {
     teamImage: id => R(`assets/teams/${id}.png`),
     voice:     id => R(`assets/voice/${id}.mp3`),
     victory:   id => R(`assets/victory/${id}.mp3`),  // 優勝チームの勝利BGM（なければ sfx.win）
-    bg:      'assets/bg/main.png',
+    bg:      'assets/bg/B.png',   // 演出の基本の背景
+    bgStage: 'assets/bg/A.png',   // タイトル・閉会式・総合順位・優勝の背景
     logo:    'assets/bg/logo.png',
     opening: 'assets/video/opening.mp4',
+    sansen:  'assets/video/sansen.mp4',  // 参戦ムービー（Mac版の演出で再生。Drive には置かない）
     sfx: {
       select: 'assets/sfx/select.mp3', vs: 'assets/sfx/vs.mp3', count: 'assets/sfx/count.mp3',
       fight: 'assets/sfx/fight.mp3',
@@ -1029,19 +1067,35 @@ function adminScore() {
 
 /* 当日の進行表：上から順に「次へ」で進む */
 const RUN = (() => {
-  const r = [{ label: 'オープニング（タイトル）', scene: 'title' }, { label: 'チーム紹介', scene: 'teams' }];
+  const OP = ['本日の流れ', '得点について', '優勝商品の紹介', 'チーム紹介・団長の一言', '注意事項'];
+  const CL = ['結果発表', '優勝団長挨拶', '優勝商品贈呈', '打ち上げ案内'];
+  const toc = (sec, items, i) => ({ label: `${sec}：目次（${items[i]}）`, scene: 'slide', slide: { type: 'toc', sec, items, i } });
+  const r = [{ label: 'オープニング（タイトル）', scene: 'title' },
+    toc('開会式', OP, 0), { label: '開会式：本日の流れ', scene: 'slide', slide: { type: 'schedule' } },
+    toc('開会式', OP, 1), { label: '開会式：得点について', scene: 'slide', slide: { type: 'points' } },
+    toc('開会式', OP, 2), { label: '開会式：優勝商品の紹介', scene: 'slide', slide: { type: 'list', en: 'PRIZE', ja: '優勝商品の紹介', key: 'prize', big: true } },
+    toc('開会式', OP, 3), { label: 'チーム紹介', scene: 'teams' },
+    toc('開会式', OP, 4), { label: '開会式：注意事項', scene: 'slide', slide: { type: 'list', en: 'NOTICE', ja: '注意事項', key: 'cautions' } },
+    { label: '参戦ムービー', scene: 'video', src: CONFIG.assets.sansen },
+    { label: 'ラジオ体操', scene: 'slide', slide: { type: 'big', en: 'WARM UP', main: 'ラジオ体操', sub: '第一・第二　いちばん元気なチームに +10点！' } }];
   for (let k = 1; k <= 4; k++) r.push({ label: `${EV.kehai.name} 第${k}試合（A・B同時）`, scene: 'tama', round: k });
   r.push({ label: `${EV.kehai.name} 対戦表`, scene: 'bracket' }, { label: `${EV.kehai.name} 順位発表`, scene: 'rank', event: 'kehai' });
   for (let k = 1; k <= EV.kariru.rounds; k++) r.push({ label: `${EV.kariru.name} 第${k}回`, scene: 'kariru', round: k });
   r.push({ label: `${EV.kariru.name} 順位発表`, scene: 'rank', event: 'kariru' },
     { label: `${EV.relay.name} 種目紹介`, scene: 'relay' }, { label: `${EV.relay.name} 順位発表`, scene: 'rank', event: 'relay' },
     { label: 'クイズ（クイズの画面に切り替える）', scene: 'quiz' }, { label: '集計中（17:20〜 閉会式まで）', scene: 'tally' },
-    { label: '閉会式：追加点の発表（全部）', scene: 'bonus' }, { label: '閉会式：総合順位発表（棒グラフ）→ 優勝', scene: 'finalbars' });
+    { label: '閉会式（タイトル）', scene: 'slide', slide: { type: 'big', en: 'CLOSING CEREMONY', main: '閉会式', stage: true } },
+    toc('閉会式', CL, 0), { label: '閉会式：追加点の発表（全部）', scene: 'bonus' }, { label: '閉会式：総合順位発表（棒グラフ）→ 優勝', scene: 'finalbars' },
+    toc('閉会式', CL, 1), { label: '閉会式：優勝団長挨拶', scene: 'slide', slide: { type: 'big', en: 'CHAMPION', main: '@winner', sub: '優勝団長挨拶', stage: true } },
+    toc('閉会式', CL, 2), { label: '閉会式：優勝商品贈呈', scene: 'slide', slide: { type: 'list', en: 'PRIZE', ja: '優勝商品贈呈', key: 'prize', big: true } },
+    toc('閉会式', CL, 3), { label: '閉会式：打ち上げ案内', scene: 'slide', slide: { type: 'list', en: 'AFTER PARTY', ja: '打ち上げ案内', key: 'party', big: true } },
+    { label: '閉会（ありがとうございました）', scene: 'slide', slide: { type: 'big', en: 'THANK YOU', main: 'ありがとうございました！', sub: 'TKO2026 閉会', stage: true } },
+    { label: '集合写真タイム', scene: 'slide', slide: { type: 'big', en: 'PHOTO TIME', main: '集合写真タイム', stage: true } });
   return r;
 })();
 const STEPLABEL = { title: ['タイトル', 'オープニング映像'], teams: i => i ? `${i} / ${CONFIG.teams.length} チーム紹介済み` : '全チーム表示',
   rank: i => i ? `${i} / ${CONFIG.teams.length} 位まで公開` : '順位は伏せた状態', tama: ['対戦カード', 'カウントダウン → 試合中', '結果表示'],
-  kariru: ['出走者', '結果'], bracket: ['表示中'], relay: ['表示中'], quiz: ['表示中'], bonus: ['表示中'], tally: ['表示中'] };
+  kariru: ['出走者', '結果'], bracket: ['表示中'], relay: ['表示中'], quiz: ['表示中'], bonus: ['表示中'], tally: ['表示中'], slide: ['表示中'], video: ['再生'] };
 function stepLabel() { const p = state.present, f = STEPLABEL[p.scene]; return typeof f === 'function' ? f(p.step) : (f || [])[p.step] || ''; }
 function goRun(i) {
   i = Math.max(0, Math.min(RUN.length - 1, i));
@@ -1147,7 +1201,7 @@ function showHint() { const h = $('#hint'); if (!h) return; h.classList.remove('
 function renderPresent() {
   const app = $('#app');
   if (!P) {
-    app.innerHTML = `<div id="presentRoot"><div id="stage"><img class="bgimg" src="${R(CONFIG.assets.bg)}" alt="" onerror="this.remove()"><div class="stripes"></div><div id="scene"></div>
+    app.innerHTML = `<div id="presentRoot"><div id="stage"><img class="bgimg" id="bgimg" src="${R(CONFIG.assets.bg)}" alt="" onerror="this.style.visibility='hidden'"><div class="bgdim"></div><div class="stripes"></div><div id="scene"></div>
       ${PREVIEW ? '' : '<div class="hint" id="hint">Space：次へ ／ ← 戻る ／ F：全画面 ／ M：消音 ／ Esc：管理へ</div>'}
       ${P_unlocked || PREVIEW ? '' : '<div class="startgate" id="gate"><div>クリックで演出を開始<small>ブラウザの仕様で、一度クリックするまで音が鳴りません</small></div></div>'}</div></div>
       ${PREVIEW ? '' : `<button class="exitbtn" type="button" onclick="location.hash='#admin'">管理画面へ</button>`}`;
@@ -1163,9 +1217,11 @@ function renderPresent() {
   const sceneEl = $('#scene');
   if (key !== P.key) {
     P.timers.forEach(clearTimeout); P.timers = [];
+    setStageBg();
+    if (P.bgmHeld && p.scene !== 'video') { const b = bgmAudio(); if (b && !muted) b.play().catch(() => {}); P.bgmHeld = false; }
     P.key = key; P.step = -1;
     sceneEl.innerHTML = '';
-    ({ title: buildTitle, teams: buildTeams, bracket: buildBracket, vs: buildVS, rank: buildRank, tama: buildTama, kariru: buildKariru, relay: buildRelay, quiz: buildQuiz, bonus: buildBonus, tally: buildTally, finalbars: buildFinal })[p.scene](sceneEl);
+    ({ title: buildTitle, teams: buildTeams, bracket: buildBracket, vs: buildVS, rank: buildRank, tama: buildTama, kariru: buildKariru, relay: buildRelay, quiz: buildQuiz, bonus: buildBonus, tally: buildTally, finalbars: buildFinal, slide: buildSlide, video: buildVideo })[p.scene](sceneEl);
   } else if (p.scene === 'bracket') { buildBracket(sceneEl); }
   else if (p.scene === 'tama') { updateTama(); }
   else if (p.scene === 'kariru') { updateKariru(); }
@@ -1402,6 +1458,57 @@ function stepRank(step, live, prev) {
       wl.querySelector('.winner').onclick = () => { wl.innerHTML = ''; };
     }, 900);
   }
+}
+
+/* 背景：タイトル・閉会式・総合順位は A（台座）、それ以外は B */
+function curRun() { const p = state.present; return p.run != null && p.run < RUN.length ? RUN[p.run] : null; }
+function setStageBg() {
+  const img = $('#bgimg'); if (!img) return;
+  const it = curRun(), sc = state.present.scene;
+  const stage = sc === 'title' || sc === 'finalbars' || (sc === 'slide' && it && it.slide && it.slide.stage);
+  const src = R(stage ? CONFIG.assets.bgStage : CONFIG.assets.bg);
+  if (img.getAttribute('src') !== src) { img.style.visibility = ''; img.src = src; }
+}
+function bgmAudio() { return audioCache[R(CONFIG.assets.sfx.bgm)] || null; }
+
+/* 開会式・閉会式のスライド（中身は CONFIG.ceremony） */
+function buildSlide(el) {
+  const it = curRun(), sd = (it && it.slide) || { type: 'big', main: '' }, C = CONFIG.ceremony;
+  const band = (en, ja) => `<div class="band"><span class="en">${esc(en)}</span><span class="ja">${esc(ja)}</span></div>`;
+  let body = '';
+  if (sd.type === 'toc') {
+    body = band('INDEX', `${sd.sec}　目次`) + `<div class="sl-toc">${sd.items.map((x, i) => `<div class="${i === sd.i ? 'on' : ''}" style="--d:${i * .06}s"><b class="num">${i + 1}</b>${esc(x)}</div>`).join('')}</div>`;
+  } else if (sd.type === 'schedule') {
+    body = band('TIME TABLE', '本日の流れ') + `<div class="sl-sched">${C.schedule.map(([t, n, c], i) => `<div style="--d:${i * .07}s"><b class="num">${esc(t)}〜</b><span>${esc(n)}</span><small>${esc(c)}</small></div>`).join('')}</div>`;
+  } else if (sd.type === 'points') {
+    const kp = EV.kehai.points, rk = a => a.map((p, i) => `${i + 1}位 ${p}`).join('／');
+    const rows = [[EV.kehai.name, `勝ち ${kp.win}点／引き分け ${kp.draw}点／負け ${kp.lose}点（1チーム2試合）`],
+      [EV.kariru.name, `${rk(EV.kariru.points.slice(0, 4))}… ×${EV.kariru.rounds}回`, `全員借りられたら +${EV.kariru.bonus}点`],
+      [EV.relay.name, rk(EV.relay.points.slice(0, 4)) + '…'],
+      [EV.quiz.name, `全12問・最大 ${EV.quiz.max}点`],
+      ['ボーナス', `ラジオ体操・特別賞など +${EV.radio.points}点`]];
+    body = band('POINTS', '得点について') + `<div class="sl-pts">${rows.map(([n, a, b], i) => `<div style="--d:${i * .07}s"><b>${esc(n)}</b><span>${esc(a)}${b ? `<small>${esc(b)}</small>` : ''}</span></div>`).join('')}</div>`;
+  } else if (sd.type === 'list') {
+    const items = C[sd.key] || [];
+    body = band(sd.en, sd.ja) + `<div class="sl-list ${sd.big ? 'big' : ''}">${items.map((x, i) => `<div style="--d:${i * .08}s">${esc(x)}</div>`).join('')}</div>`;
+  } else {
+    let main = sd.main, tc = '';
+    if (main === '@winner') { const w = ranking()[0]; main = w ? w.t.name : ''; tc = w ? w.t.color : ''; }
+    body = `<div class="sl-big" ${tc ? `style="--tc:${tc}"` : ''}><div class="en">${esc(sd.en || '')}</div><div class="main ${tc ? 'team' : ''}" style="font-size:${main.length > 9 ? 120 : main.length > 6 ? 150 : 190}px">${esc(main)}</div>${sd.sub ? `<div class="sub">${esc(sd.sub)}</div>` : ''}</div>`;
+  }
+  el.innerHTML = `<div class="scene sc-slide">${body}</div>`;
+}
+
+/* 動画（参戦ムービーなど）。この場面に来たら再生、BGM は止めて、終わったら戻す */
+function buildVideo(el) {
+  const it = curRun(), src = R((it && it.src) || CONFIG.assets.sansen);
+  el.innerHTML = `<div class="scene sc-video"><video id="scVideo" playsinline preload="auto"></video><div class="vmsg" id="vmsg" hidden></div></div>`;
+  const v = $('#scVideo'), b = bgmAudio();
+  if (b && !b.paused) { b.pause(); P.bgmHeld = true; }
+  v.muted = muted || PREVIEW;
+  v.onerror = () => { const m = $('#vmsg'); if (m) { m.hidden = false; m.textContent = '動画が見つかりません（Mac版の演出で、tko-demo/assets/video に置いて再生してください）'; } };
+  v.onended = () => { const bb = bgmAudio(); if (P && P.bgmHeld && bb && !muted) { bb.play().catch(() => {}); P.bgmHeld = false; } };
+  v.src = src; v.play().catch(() => {});
 }
 
 /* 総合順位発表（棒グラフ）：次へで種目ごとに色の帯が伸び、最後に並べ替えて優勝を出す */
