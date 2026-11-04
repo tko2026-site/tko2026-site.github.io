@@ -425,7 +425,7 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 </head>
 <body>
 <nav id="modebar" aria-label="画面切り替え">
-  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1104a</span></span>
+  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1104b</span></span>
   <a href="#register" data-mode="register">チーム登録</a>
   <a href="#admin" data-mode="admin">管理</a>
   <a href="#present" data-mode="present">演出</a>
@@ -506,6 +506,7 @@ const CONFIG = {
     opening: 'assets/video/opening.mp4',
     sansen:  'assets/video/sansen.mp4',  // 参戦ムービー（Mac版の演出で再生。Drive には置かない）
     breakVideo: 'assets/video/break.mp4', // 休憩画面の背景に音なしで繰り返す映像（なければ背景画像）
+    breakBgm:   'assets/bgm/tomoshibi.mp3', // 休憩中に繰り返すBGM（灯火の星）。なければいつものBGMのまま
     sfx: {
       select: 'assets/sfx/select.mp3', vs: 'assets/sfx/vs.mp3', count: 'assets/sfx/count.mp3',
       fight: 'assets/sfx/fight.mp3',
@@ -1195,7 +1196,7 @@ function fillSample() {
    ===================================================================== */
 let P = null; // 演出画面の描画状態 { key, step, timers, seen }
 const seenDecided = new Set();
-function teardownPresent() { if (P) { P.timers.forEach(clearTimeout); window.removeEventListener('resize', fitStage); window.removeEventListener('keydown', presentKey); P = null; } }
+function teardownPresent() { if (P) { stopBreakBgm(); P.timers.forEach(clearTimeout); window.removeEventListener('resize', fitStage); window.removeEventListener('keydown', presentKey); P = null; } }
 function later(fn, ms) { const id = setTimeout(fn, ms); P && P.timers.push(id); return id; }
 function fitStage() { const s = Math.min(innerWidth / 1920, innerHeight / 1080); const st = $('#stage'); if (st) st.style.transform = `translate(-50%,-50%) scale(${s})`; }
 
@@ -1242,7 +1243,8 @@ function renderPresent() {
   if (key !== P.key) {
     P.timers.forEach(clearTimeout); P.timers = [];
     setStageBg();
-    if (P.bgmHeld && p.scene !== 'video') { const b = bgmAudio(); if (b && !muted) b.play().catch(() => {}); P.bgmHeld = false; }
+    stopBreakBgm();
+    if (P.bgmHeld && p.scene !== 'video' && p.scene !== 'break') { const b = bgmAudio(); if (b && !muted) b.play().catch(() => {}); P.bgmHeld = false; }
     P.key = key; P.step = -1;
     sceneEl.innerHTML = '';
     ({ title: buildTitle, teams: buildTeams, bracket: buildBracket, vs: buildVS, rank: buildRank, tama: buildTama, kariru: buildKariru, relay: buildRelay, quiz: buildQuiz, bonus: buildBonus, tally: buildTally, finalbars: buildFinal, slide: buildSlide, video: buildVideo, break: buildBreak })[p.scene](sceneEl);
@@ -1532,6 +1534,7 @@ function fitText(root) {
   run(); document.fonts && document.fonts.ready.then(() => { if (root.isConnected) run(); });
 }
 
+function stopBreakBgm() { if (P && P.brAudio) { P.brAudio.pause(); P.brAudio = null; } }
 /* 休憩：背景に映像（音なし・繰り返し）、終わりの時刻と残り時間 */
 function buildBreak(el) {
   const it = curRun(), b = (it && it.brk) || { from: '', to: '', next: '' };
@@ -1539,6 +1542,12 @@ function buildBreak(el) {
     <div class="bin"><div class="en">BREAK TIME</div><div class="main">休憩</div><div class="time num">${esc(b.from)}<small>〜</small>${esc(b.to)}<small>まで</small></div>
     <div class="left">あと <b class="num" id="brLeft">--:--</b></div>${b.next ? `<div class="next">次は　${esc(b.next)}</div>` : ''}</div></div>`;
   const v = $('#brVid'); v.onerror = () => v.remove(); v.src = R(CONFIG.assets.breakVideo); v.play().catch(() => {});
+  // 休憩のBGM：鳴り始めたらいつものBGMを止める（曲がなければ何もしない）
+  if (!muted && !PREVIEW && !P.brAudio) {
+    const a = new Audio(R(CONFIG.assets.breakBgm)); a.loop = true; a.volume = .5; P.brAudio = a;
+    a.addEventListener('playing', () => { const bg = bgmAudio(); if (bg && !bg.paused) { bg.pause(); P.bgmHeld = true; } }, { once: true });
+    a.play().catch(() => {});
+  }
   const end = (() => { const [h, m] = (b.to || '0:0').split(':').map(Number), d = new Date(); d.setHours(h, m, 0, 0); return d.getTime(); })();
   const tick = () => {
     const e = $('#brLeft'); if (!e) return;
