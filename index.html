@@ -225,14 +225,15 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 .sc-tama .v{font-family:var(--f-display);font-size:64px;text-align:center;color:#fff;-webkit-text-stroke:3px #0b1024}
 .tside{display:flex;flex-direction:column;align-items:center;gap:10px;padding:22px 10px;border-radius:16px;background:#18214d;border:4px solid var(--tc);transition:filter .4s,transform .4s}
 .tside .timg{width:170px;height:170px;--fs:70px}.tside b{font-family:var(--f-display);font-weight:400;white-space:nowrap}
-.tside small{font-size:24px;color:#c6cdf0}.tside .balls{font-family:var(--f-display);font-size:92px;line-height:1;min-height:92px}.tside .balls.wait{font-size:44px;line-height:92px;color:#9aa6d8}
+.tside small{font-size:24px;color:#c6cdf0}.tside .kago{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 18px;border-radius:10px;background:rgba(255,255,255,.08);max-width:100%}
+.tside .kago i{font-style:normal;font-size:20px;font-weight:900;color:var(--gold)}.tside .kago b{font-size:44px;font-weight:900;color:#fff;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}.tside .balls{font-family:var(--f-display);font-size:92px;line-height:1;min-height:92px}.tside .balls.wait{font-size:44px;line-height:92px;color:#9aa6d8}
 .tside.win{transform:scale(1.05);box-shadow:0 0 50px var(--tc)}.tside.lose{filter:grayscale(1) brightness(.5)}
 .sc-tama .tmr{position:absolute;left:50%;bottom:40px;transform:translateX(-50%);font-family:var(--f-display);font-size:110px;line-height:1;padding:8px 40px;border-radius:16px;background:rgba(8,12,30,.85);border:5px solid var(--gold)}
 .sc-tama .tmr.low{color:#ff4057;border-color:#ff4057}.sc-tama .tmr.up{color:#ff4057;border-color:#ff4057;animation:chipPop .6s both}
 /* 演出：借り人競争 */
 .sc-kariru .kgrid{position:absolute;left:60px;right:60px;top:210px;bottom:60px;display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
 .kc{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;border-radius:14px;background:#18214d;border:4px solid var(--tc);transition:filter .4s,transform .4s}
-.kc .timg{width:120px;height:120px;--fs:50px}.kc .kn{text-align:center}.kc .kn b{display:block;font-family:var(--f-display);font-weight:400;font-size:32px}.kc .kn span{font-size:30px;font-weight:900}
+.kc .timg{width:120px;height:120px;--fs:50px}.kc .kn{text-align:center}.kc .kn b{display:block;font-family:var(--f-display);font-weight:400;font-size:32px}.kc .kn span{display:block;margin-top:6px;font-size:46px;font-weight:900;color:#fff;line-height:1.2;text-shadow:0 2px 0 #0b1024}
 .kc .kr{position:absolute;top:10px;right:14px;font-family:var(--f-display);font-size:60px;line-height:1;color:var(--gold)}.kc .kr small{font-size:26px}.kc .kr em{display:block;font-style:normal;font-size:26px;text-align:right;color:#fff}
 .kc.top{box-shadow:0 0 50px var(--tc);transform:scale(1.04)}.kc.dim{filter:grayscale(1) brightness(.5)}
 /* 演出：追加点 */
@@ -364,30 +365,42 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 .fbrow.first .rk{color:#0b1024}
 /* 背景を暗くして文字を読みやすく */
 #stage .bgdim{position:absolute;inset:0;z-index:0;background:linear-gradient(180deg,rgba(5,8,20,.35),rgba(5,8,20,.55))}
-/* 開会式・閉会式のスライド */
+/* 開会式・閉会式のスライド：題字フォント・1行（.fit は自動で縮む） */
 .sc-slide [style*="--d"]{opacity:0;animation:fadeUp2 .45s var(--d) cubic-bezier(.2,.9,.2,1) forwards}
 @keyframes fadeUp2{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
-.sl-toc{position:absolute;left:150px;right:150px;top:260px;display:grid;grid-template-columns:1fr 1fr;grid-auto-flow:column;grid-template-rows:repeat(3,auto);gap:34px 80px}
-.sl-toc div{display:flex;align-items:center;gap:26px;font-weight:900;font-size:50px;white-space:nowrap;color:rgba(255,255,255,.55);padding:14px 28px;background:rgba(11,16,36,.72);border-left:10px solid rgba(255,255,255,.25)}
-.sl-toc div b{font-family:var(--f-display);font-size:64px}
+.fit{display:block;white-space:nowrap;overflow:hidden;min-width:0;max-width:100%}
+.sc-slide{font-family:var(--f-display);font-weight:400;letter-spacing:.02em}
+.sl-toc{position:absolute;left:130px;right:130px;top:250px;display:grid;grid-template-columns:1fr 1fr;grid-auto-flow:column;grid-template-rows:repeat(3,auto);gap:34px 60px}
+.sl-toc div{display:flex;align-items:center;gap:26px;font-size:52px;color:rgba(255,255,255,.6);padding:16px 30px;background:rgba(11,16,36,.75);border-left:10px solid rgba(255,255,255,.25);min-width:0}
+.sl-toc div b{font-size:64px;flex:none}
 .sl-toc div.on{color:#0b1024;background:var(--gold);border-left-color:#fff}
-.sl-sched{position:absolute;left:260px;right:260px;top:230px;display:flex;flex-direction:column;gap:18px}
-.sl-sched div{display:grid;grid-template-columns:260px 1fr auto;align-items:center;gap:30px;background:rgba(11,16,36,.78);padding:14px 36px;font-weight:900;font-size:52px}
-.sl-sched b{font-family:var(--f-display);font-size:60px;color:var(--gold)}
-.sl-sched small{font-size:32px;color:rgba(255,255,255,.7)}
-.sl-pts{position:absolute;left:160px;right:160px;top:230px;display:flex;flex-direction:column;gap:18px}
-.sl-pts div{display:grid;grid-template-columns:330px 1fr;align-items:center;gap:30px;background:rgba(11,16,36,.8);padding:18px 36px}
-.sl-pts b{font-weight:900;font-size:46px;color:var(--gold)}
-.sl-pts span{font-weight:700;font-size:40px;display:flex;flex-direction:column}
-.sl-pts small{font-size:30px;color:rgba(255,255,255,.75)}
-.sl-list{position:absolute;left:260px;right:260px;top:260px;display:flex;flex-direction:column;gap:24px}
-.sl-list div{background:rgba(11,16,36,.8);border-left:12px solid var(--gold);padding:18px 40px;font-weight:900;font-size:56px}
-.sl-list.big{top:300px;left:100px;right:100px;align-items:center}.sl-list.big div{font-size:76px;border-left:0;text-align:center;padding:24px 70px}
+.sl-sched{position:absolute;left:220px;right:220px;top:220px;display:flex;flex-direction:column;gap:18px}
+.sl-sched div{display:grid;grid-template-columns:250px 1fr auto;align-items:center;gap:30px;background:rgba(11,16,36,.8);padding:14px 40px;font-size:56px}
+.sl-sched b{font-size:60px;color:var(--gold)}
+.sl-sched small{font-size:34px;color:rgba(255,255,255,.75)}
+.sl-pts{position:absolute;left:110px;right:110px;top:220px;display:flex;flex-direction:column;gap:18px}
+.sl-pts div{display:grid;grid-template-columns:330px 1fr;align-items:center;gap:30px;background:rgba(11,16,36,.82);padding:18px 40px}
+.sl-pts b{font-size:48px;color:var(--gold)}
+.sl-pts span{display:flex;flex-direction:column;min-width:0}
+.sl-pts em{font-style:normal;font-size:44px}
+.sl-pts small{font-size:32px;color:rgba(255,255,255,.75)}
+.sl-list{position:absolute;left:150px;right:150px;top:230px;display:flex;flex-direction:column;gap:20px}
+.sl-list div{background:rgba(11,16,36,.82);border-left:12px solid var(--gold);padding:16px 40px;font-size:54px}
+.sl-list.big{top:300px;left:100px;right:100px;align-items:center}.sl-list.big div{font-size:80px;border-left:0;text-align:center;padding:24px 70px}
 .sl-big{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px}
 .sl-big .en{font-family:var(--f-display);font-size:64px;letter-spacing:.2em;color:var(--gold);animation:fadeIn .5s both}
-.sl-big .main{font-family:var(--f-display);font-size:190px;line-height:1.1;color:#fff;-webkit-text-stroke:8px #0b1024;paint-order:stroke fill;transform:skewX(-8deg);animation:popIn .6s .15s both}
+.sl-big .main{font-family:var(--f-display);font-size:190px;line-height:1.25;max-width:1760px;padding:0 20px;color:#fff;-webkit-text-stroke:8px #0b1024;paint-order:stroke fill;transform:skewX(-8deg);animation:popIn .6s .15s both}
 .sl-big .main.team{color:var(--tc)}
 .sl-big .sub{background:#0b1024;color:var(--gold);font-family:var(--f-display);font-size:58px;padding:8px 40px;transform:skewX(-8deg);animation:fadeUp .5s .6s both}
+/* 休憩 */
+.sc-break .bvid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.sc-break .bdim{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(5,8,20,.35),rgba(5,8,20,.8))}
+.sc-break .bin{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;font-family:var(--f-display)}
+.sc-break .en{font-size:60px;letter-spacing:.3em;color:var(--gold)}
+.sc-break .main{font-size:230px;line-height:1.1;color:#fff;-webkit-text-stroke:9px #0b1024;paint-order:stroke fill;transform:skewX(-8deg);animation:popIn .6s .1s both}
+.sc-break .time{font-size:110px;line-height:1.1;color:#fff;text-shadow:0 4px 20px #000}.sc-break .time small{font-size:56px;margin:0 12px}
+.sc-break .left{font-size:46px;color:#fff;background:rgba(11,16,36,.85);padding:8px 40px;border:4px solid var(--gold)}.sc-break .left b{font-size:64px;color:var(--gold);margin-left:10px}
+.sc-break .next{margin-top:20px;font-size:48px;color:#0b1024;background:var(--gold);padding:6px 40px;transform:skewX(-8deg)}
 .sc-video{background:#000}.sc-video video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
 .sc-video .vmsg{position:absolute;inset:0;display:grid;place-items:center;font-size:40px;font-weight:900;color:#fff;padding:0 200px;text-align:center}
 .winner{position:absolute;inset:0;z-index:20;display:grid;place-items:center;background:radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--tc) 70%,transparent) 0%,rgba(5,8,20,.92) 60%);animation:fadeIn .4s both}
@@ -412,7 +425,7 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 </head>
 <body>
 <nav id="modebar" aria-label="画面切り替え">
-  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1102a</span></span>
+  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1104a</span></span>
   <a href="#register" data-mode="register">チーム登録</a>
   <a href="#admin" data-mode="admin">管理</a>
   <a href="#present" data-mode="present">演出</a>
@@ -478,6 +491,10 @@ const CONFIG = {
     prize: ['（優勝商品は準備中）'],
     cautions: ['水分補給しっかり！', '体調が悪くなったら早めに相談！', 'ケガには気をつけて！', 'ゴミは持ち帰る！', '忘れ物に気をつけよう！'],
     party: ['19:30〜 打ち上げ', '詳しくはチャットを見てください'],
+    tamaRules: ['A・Bの2コートで同時に対戦（1試合2チーム）', '各チーム1人が籠を背負う', '制限時間5分、籠に入った玉が多いほうの勝ち',
+                '勝ち20点・引き分け10点・負け0点', '全4試合、各チーム2試合'],
+    kariruRules: ['全8回、各回1チーム1人が走る', '紙に書かれたお題に合う人を借りてゴール', 'ゴールした順に、インタビューでお題に合っているか確認',
+                  '合っていなければ0点、後ろのチームが繰り上がり', '1位20点〜8位1点、全員当たったチームに+10点', '見ている人は座って待つ／次の組は前の人の後ろで待機'],
   },
   assets: {
     teamImage: id => R(`assets/teams/${id}.png`),
@@ -488,6 +505,7 @@ const CONFIG = {
     logo:    'assets/bg/logo.png',
     opening: 'assets/video/opening.mp4',
     sansen:  'assets/video/sansen.mp4',  // 参戦ムービー（Mac版の演出で再生。Drive には置かない）
+    breakVideo: 'assets/video/break.mp4', // 休憩画面の背景に音なしで繰り返す映像（なければ背景画像）
     sfx: {
       select: 'assets/sfx/select.mp3', vs: 'assets/sfx/vs.mp3', count: 'assets/sfx/count.mp3',
       fight: 'assets/sfx/fight.mp3',
@@ -1078,11 +1096,17 @@ const RUN = (() => {
     toc('開会式', OP, 4), { label: '開会式：注意事項', scene: 'slide', slide: { type: 'list', en: 'NOTICE', ja: '注意事項', key: 'cautions' } },
     { label: '参戦ムービー', scene: 'video', src: CONFIG.assets.sansen },
     { label: 'ラジオ体操', scene: 'slide', slide: { type: 'big', en: 'WARM UP', main: 'ラジオ体操', sub: '第一・第二　いちばん元気なチームに +10点！' } }];
+  const brk = (from, to, next) => ({ label: `休憩（${from}〜${to}）`, scene: 'break', brk: { from, to, next } });
+  r.push({ label: `${EV.kehai.name} ルール説明`, scene: 'slide', slide: { type: 'list', en: 'RULES', ja: `${EV.kehai.name}　ルール`, key: 'tamaRules' } },
+    { label: `${EV.kehai.name} 対戦表（試合前）`, scene: 'bracket' });
   for (let k = 1; k <= 4; k++) r.push({ label: `${EV.kehai.name} 第${k}試合（A・B同時）`, scene: 'tama', round: k });
-  r.push({ label: `${EV.kehai.name} 対戦表`, scene: 'bracket' }, { label: `${EV.kehai.name} 順位発表`, scene: 'rank', event: 'kehai' });
+  r.push({ label: `${EV.kehai.name} 対戦表（結果）`, scene: 'bracket' }, { label: `${EV.kehai.name} 順位発表`, scene: 'rank', event: 'kehai' },
+    brk('15:40', '15:45', EV.kariru.name),
+    { label: `${EV.kariru.name} ルール説明`, scene: 'slide', slide: { type: 'list', en: 'RULES', ja: `${EV.kariru.name}　ルール`, key: 'kariruRules' } });
   for (let k = 1; k <= EV.kariru.rounds; k++) r.push({ label: `${EV.kariru.name} 第${k}回`, scene: 'kariru', round: k });
-  r.push({ label: `${EV.kariru.name} 順位発表`, scene: 'rank', event: 'kariru' },
+  r.push({ label: `${EV.kariru.name} 順位発表`, scene: 'rank', event: 'kariru' }, brk('16:25', '16:35', EV.relay.name),
     { label: `${EV.relay.name} 種目紹介`, scene: 'relay' }, { label: `${EV.relay.name} 順位発表`, scene: 'rank', event: 'relay' },
+    brk('16:50', '17:00', 'クイズ（スマホで参加の準備）'),
     { label: 'クイズ（クイズの画面に切り替える）', scene: 'quiz' }, { label: '集計中（17:20〜 閉会式まで）', scene: 'tally' },
     { label: '閉会式（タイトル）', scene: 'slide', slide: { type: 'big', en: 'CLOSING CEREMONY', main: '閉会式', stage: true } },
     toc('閉会式', CL, 0), { label: '閉会式：追加点の発表（全部）', scene: 'bonus' }, { label: '閉会式：総合順位発表（棒グラフ）→ 優勝', scene: 'finalbars' },
@@ -1095,7 +1119,7 @@ const RUN = (() => {
 })();
 const STEPLABEL = { title: ['タイトル', 'オープニング映像'], teams: i => i ? `${i} / ${CONFIG.teams.length} チーム紹介済み` : '全チーム表示',
   rank: i => i ? `${i} / ${CONFIG.teams.length} 位まで公開` : '順位は伏せた状態', tama: ['対戦カード', 'カウントダウン → 試合中', '結果表示'],
-  kariru: ['出走者', '結果'], bracket: ['表示中'], relay: ['表示中'], quiz: ['表示中'], bonus: ['表示中'], tally: ['表示中'], slide: ['表示中'], video: ['再生'] };
+  kariru: ['出走者', '結果'], bracket: ['表示中'], relay: ['表示中'], quiz: ['表示中'], bonus: ['表示中'], tally: ['表示中'], slide: ['表示中'], video: ['再生'], break: ['表示中'] };
 function stepLabel() { const p = state.present, f = STEPLABEL[p.scene]; return typeof f === 'function' ? f(p.step) : (f || [])[p.step] || ''; }
 function goRun(i) {
   i = Math.max(0, Math.min(RUN.length - 1, i));
@@ -1221,7 +1245,7 @@ function renderPresent() {
     if (P.bgmHeld && p.scene !== 'video') { const b = bgmAudio(); if (b && !muted) b.play().catch(() => {}); P.bgmHeld = false; }
     P.key = key; P.step = -1;
     sceneEl.innerHTML = '';
-    ({ title: buildTitle, teams: buildTeams, bracket: buildBracket, vs: buildVS, rank: buildRank, tama: buildTama, kariru: buildKariru, relay: buildRelay, quiz: buildQuiz, bonus: buildBonus, tally: buildTally, finalbars: buildFinal, slide: buildSlide, video: buildVideo })[p.scene](sceneEl);
+    ({ title: buildTitle, teams: buildTeams, bracket: buildBracket, vs: buildVS, rank: buildRank, tama: buildTama, kariru: buildKariru, relay: buildRelay, quiz: buildQuiz, bonus: buildBonus, tally: buildTally, finalbars: buildFinal, slide: buildSlide, video: buildVideo, break: buildBreak })[p.scene](sceneEl);
   } else if (p.scene === 'bracket') { buildBracket(sceneEl); }
   else if (p.scene === 'tama') { updateTama(); }
   else if (p.scene === 'kariru') { updateKariru(); }
@@ -1250,7 +1274,7 @@ function tamaMatches(k) { return EV.kehai.courts.map((c, ci) => match(`C${ci + 1
 function buildTama(el) {
   const k = state.present.round || 1;
   const side = (id, mid, s) => { const t = TEAM[id]; return `<div class="tside" id="ts_${mid}_${s}" style="--tc:${t.color}">${timg(t)}<b style="font-size:${t.name.length > 5 ? 34 : 44}px">${esc(t.name)}</b>
-    <small>籠：${esc(state.entries[id].kehai[0] || '—')}</small><div class="balls num" id="tb_${mid}_${s}"></div></div>`; };
+    <div class="kago"><i>籠を背負う人</i><b>${esc(state.entries[id].kehai[0] || '—')}</b></div><div class="balls num" id="tb_${mid}_${s}"></div></div>`; };
   el.innerHTML = `<div class="scene sc-tama" id="scTama"><div class="band"><span class="en">MATCH ${k}</span><span class="ja">${esc(EV.kehai.name)}　第${k}試合</span></div>
     <div class="courts">${tamaMatches(k).map(m => `<div class="court"><div class="cname">${esc(m.def.court)}</div>
       <div class="pair">${side(m.L, m.id, 'a')}<div class="v">VS</div>${side(m.R, m.id, 'b')}</div></div>`).join('')}</div>
@@ -1477,26 +1501,53 @@ function buildSlide(el) {
   const band = (en, ja) => `<div class="band"><span class="en">${esc(en)}</span><span class="ja">${esc(ja)}</span></div>`;
   let body = '';
   if (sd.type === 'toc') {
-    body = band('INDEX', `${sd.sec}　目次`) + `<div class="sl-toc">${sd.items.map((x, i) => `<div class="${i === sd.i ? 'on' : ''}" style="--d:${i * .06}s"><b class="num">${i + 1}</b>${esc(x)}</div>`).join('')}</div>`;
+    body = band('INDEX', `${sd.sec}　目次`) + `<div class="sl-toc">${sd.items.map((x, i) => `<div class="${i === sd.i ? 'on' : ''}" style="--d:${i * .06}s"><b class="num">${i + 1}</b><span class="fit">${esc(x)}</span></div>`).join('')}</div>`;
   } else if (sd.type === 'schedule') {
-    body = band('TIME TABLE', '本日の流れ') + `<div class="sl-sched">${C.schedule.map(([t, n, c], i) => `<div style="--d:${i * .07}s"><b class="num">${esc(t)}〜</b><span>${esc(n)}</span><small>${esc(c)}</small></div>`).join('')}</div>`;
+    body = band('TIME TABLE', '本日の流れ') + `<div class="sl-sched">${C.schedule.map(([t, n, c], i) => `<div style="--d:${i * .07}s"><b class="num">${esc(t)}〜</b><span class="fit">${esc(n)}</span><small>${esc(c)}</small></div>`).join('')}</div>`;
   } else if (sd.type === 'points') {
     const kp = EV.kehai.points, rk = a => a.map((p, i) => `${i + 1}位 ${p}`).join('／');
     const rows = [[EV.kehai.name, `勝ち ${kp.win}点／引き分け ${kp.draw}点／負け ${kp.lose}点（1チーム2試合）`],
       [EV.kariru.name, `${rk(EV.kariru.points.slice(0, 4))}… ×${EV.kariru.rounds}回`, `全員借りられたら +${EV.kariru.bonus}点`],
       [EV.relay.name, rk(EV.relay.points.slice(0, 4)) + '…'],
-      [EV.quiz.name, `全12問・最大 ${EV.quiz.max}点`],
+      [EV.quiz.name, `最大 ${EV.quiz.max}点`],
       ['ボーナス', `ラジオ体操・特別賞など +${EV.radio.points}点`]];
-    body = band('POINTS', '得点について') + `<div class="sl-pts">${rows.map(([n, a, b], i) => `<div style="--d:${i * .07}s"><b>${esc(n)}</b><span>${esc(a)}${b ? `<small>${esc(b)}</small>` : ''}</span></div>`).join('')}</div>`;
+    body = band('POINTS', '得点について') + `<div class="sl-pts">${rows.map(([n, a, b], i) => `<div style="--d:${i * .07}s"><b class="fit">${esc(n)}</b><span><em class="fit">${esc(a)}</em>${b ? `<small class="fit">${esc(b)}</small>` : ''}</span></div>`).join('')}</div>`;
   } else if (sd.type === 'list') {
     const items = C[sd.key] || [];
-    body = band(sd.en, sd.ja) + `<div class="sl-list ${sd.big ? 'big' : ''}">${items.map((x, i) => `<div style="--d:${i * .08}s">${esc(x)}</div>`).join('')}</div>`;
+    body = band(sd.en, sd.ja) + `<div class="sl-list ${sd.big ? 'big' : ''}">${items.map((x, i) => `<div class="fit" style="--d:${i * .08}s">${esc(x)}</div>`).join('')}</div>`;
   } else {
     let main = sd.main, tc = '';
     if (main === '@winner') { const w = ranking()[0]; main = w ? w.t.name : ''; tc = w ? w.t.color : ''; }
-    body = `<div class="sl-big" ${tc ? `style="--tc:${tc}"` : ''}><div class="en">${esc(sd.en || '')}</div><div class="main ${tc ? 'team' : ''}" style="font-size:${main.length > 9 ? 120 : main.length > 6 ? 150 : 190}px">${esc(main)}</div>${sd.sub ? `<div class="sub">${esc(sd.sub)}</div>` : ''}</div>`;
+    body = `<div class="sl-big" ${tc ? `style="--tc:${tc}"` : ''}><div class="en">${esc(sd.en || '')}</div><div class="main fit ${tc ? 'team' : ''}">${esc(main)}</div>${sd.sub ? `<div class="sub">${esc(sd.sub)}</div>` : ''}</div>`;
   }
   el.innerHTML = `<div class="scene sc-slide">${body}</div>`;
+  fitText(el);
+}
+// 1行に収める：はみ出す文字だけ少しずつ小さくする（フォントの読み込み後にもう一度）
+function fitText(root) {
+  const run = () => root.querySelectorAll('.fit').forEach(e => {
+    e.style.fontSize = ''; let fs = parseFloat(getComputedStyle(e).fontSize), n = 0;
+    while (e.scrollWidth > e.clientWidth + 1 && fs > 20 && n++ < 80) { fs -= 2; e.style.fontSize = fs + 'px'; }
+  });
+  run(); document.fonts && document.fonts.ready.then(() => { if (root.isConnected) run(); });
+}
+
+/* 休憩：背景に映像（音なし・繰り返し）、終わりの時刻と残り時間 */
+function buildBreak(el) {
+  const it = curRun(), b = (it && it.brk) || { from: '', to: '', next: '' };
+  el.innerHTML = `<div class="scene sc-break"><video class="bvid" id="brVid" muted loop playsinline preload="auto"></video><div class="bdim"></div>
+    <div class="bin"><div class="en">BREAK TIME</div><div class="main">休憩</div><div class="time num">${esc(b.from)}<small>〜</small>${esc(b.to)}<small>まで</small></div>
+    <div class="left">あと <b class="num" id="brLeft">--:--</b></div>${b.next ? `<div class="next">次は　${esc(b.next)}</div>` : ''}</div></div>`;
+  const v = $('#brVid'); v.onerror = () => v.remove(); v.src = R(CONFIG.assets.breakVideo); v.play().catch(() => {});
+  const end = (() => { const [h, m] = (b.to || '0:0').split(':').map(Number), d = new Date(); d.setHours(h, m, 0, 0); return d.getTime(); })();
+  const tick = () => {
+    const e = $('#brLeft'); if (!e) return;
+    const rem = Math.ceil((end - Date.now()) / 1000);
+    e.parentNode.style.visibility = rem > 3600 ? 'hidden' : '';  // 休憩の時間より前に開いたとき（1時間以上先）は残り時間を出さない
+    e.textContent = rem > 0 ? `${Math.floor(rem / 60)}:${String(rem % 60).padStart(2, '0')}` : 'まもなく再開';
+    later(tick, 500);
+  };
+  tick();
 }
 
 /* 動画（参戦ムービーなど）。この場面に来たら再生、BGM は止めて、終わったら戻す */
