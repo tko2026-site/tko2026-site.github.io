@@ -425,7 +425,7 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 </head>
 <body>
 <nav id="modebar" aria-label="画面切り替え">
-  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1104b</span></span>
+  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1105a</span></span>
   <a href="#register" data-mode="register">チーム登録</a>
   <a href="#admin" data-mode="admin">管理</a>
   <a href="#present" data-mode="present">演出</a>
@@ -632,7 +632,7 @@ async function pull() {
     netErr = false;
     if (d.ok && d.rev !== serverRev && 'state' in d) {
       if (synced && diffOps(synced, JSON.parse(JSON.stringify(state))).length) { pushOps(); return; }  // 未送信の変更が先
-      adopt(d.state, d.rev); rerender(true);
+      adopt(d.state, d.rev); keepLive(); rerender(true);
     }
   } catch (e) { netErr = true; }
   updateNav();
@@ -641,7 +641,7 @@ async function pull() {
 function pollLoop() { pull().finally(() => setTimeout(pollLoop, { admin: 2000, present: 1500, court: 2000, register: 5000 }[mode()] || 10000)); }
 
 function save() {
-  if (REMOTE) { pushOps(); return; }
+  if (REMOTE) { sendLive(); pushOps(); return; }
   state.rev = (state.rev || 0) + 1;
   try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
   try { bc && bc.postMessage(JSON.stringify(state)); } catch (e) {}
@@ -649,6 +649,36 @@ function save() {
 function onRemote(raw) {
   try { const s = JSON.parse(raw); if ((s.rev || 0) <= (state.rev || 0)) return; state = normalize(Object.assign(blankState(), s)); } catch (e) { return; }
   rerender(true);
+}
+/* 同じPCの同じブラウザで開いている画面どうし（管理 → 演出など）は、Google を待たずにその場で場面を伝える。
+   保存はこれまでどおり Google にも送るので、他のPC・スマホは数秒遅れで追いつく */
+const LIVE_KEY = KEY + '-live', TAB_ID = Math.random().toString(36).slice(2);
+let liveBc = null, lastLive = null;
+try { if (REMOTE) liveBc = new BroadcastChannel(LIVE_KEY); } catch (e) {}
+function sendLive() {
+  const msg = JSON.stringify({ id: TAB_ID, at: Date.now(), present: state.present });
+  try { liveBc && liveBc.postMessage(msg); } catch (e) {}
+  try { localStorage.setItem(LIVE_KEY, msg); } catch (e) {}
+}
+function onLive(raw) {
+  let m; try { m = JSON.parse(raw); } catch (e) { return; }
+  if (!m || m.id === TAB_ID || !m.present || !loaded) return;
+  if (JSON.stringify(state.present) === JSON.stringify(m.present)) return;
+  lastLive = { present: m.present, at: Date.now() };
+  state.present = JSON.parse(JSON.stringify(m.present));
+  if (synced) synced.present = JSON.parse(JSON.stringify(m.present));
+  rerender(true);
+}
+// Google から届いた状態がまだ古い（さっきの「次へ」が保存される前）なら、届いたばかりの場面を優先する
+function keepLive() {
+  if (!lastLive || Date.now() - lastLive.at > 10000) return;
+  if (JSON.stringify(state.present) === JSON.stringify(lastLive.present)) return;
+  state.present = JSON.parse(JSON.stringify(lastLive.present));
+  if (synced) synced.present = JSON.parse(JSON.stringify(lastLive.present));
+}
+if (REMOTE) {
+  if (liveBc) liveBc.onmessage = e => onLive(e.data);
+  window.addEventListener('storage', e => { if (e.key === LIVE_KEY && e.newValue) onLive(e.newValue); });
 }
 if (!REMOTE) {
   window.addEventListener('storage', e => { if (e.key === KEY && e.newValue) onRemote(e.newValue); });
