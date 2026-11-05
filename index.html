@@ -114,6 +114,16 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 .orderpick button{border:1px solid var(--line);background:var(--bg3);border-left:6px solid var(--tc);border-radius:4px;padding:8px;text-align:left;font-weight:700;font-size:14px}
 .orderpick button.done{opacity:.35}
 .orderpick button .pl{float:right;color:var(--gold);font-family:var(--f-display)}
+/* 係用の大きいボタン（借り人・障害物） */
+.pad h1{font-size:34px;margin:0}
+.padgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.padbtn{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:96px;padding:12px 14px;border-radius:12px;border:3px solid var(--tc);background:color-mix(in srgb,var(--tc) 12%,var(--bg2));color:var(--fg);text-align:left;cursor:pointer}
+.padbtn b{font-size:20px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.padbtn small{font-size:14px;color:var(--muted);max-width:55%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.padbtn span{position:absolute;right:12px;bottom:8px;font-weight:900;font-size:26px;color:var(--gold);text-align:right;line-height:1.05}.padbtn span em{display:block;font-style:normal;font-size:15px;color:var(--fg)}
+.padbtn.on{background:color-mix(in srgb,var(--tc) 45%,var(--bg2))}
+.padbtn:disabled{opacity:.45}
+.swatch{font-size:64px;font-weight:900;text-align:center;letter-spacing:.02em}
+.btn.big{font-size:24px;padding:18px}
 .roundtabs{display:flex;gap:4px;flex-wrap:wrap}
 .roundtabs button{min-width:40px;padding:4px 8px;border-radius:4px;border:1px solid var(--line);background:var(--bg3);font-weight:700;font-size:13px}
 .roundtabs button.on{background:var(--gold);color:#111;border-color:var(--gold)}
@@ -214,7 +224,7 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 /* 係用：コート入力 */
 .cpair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .cside{display:flex;flex-direction:column;gap:10px;align-items:stretch;padding:14px;border-radius:10px;border:3px solid var(--tc);background:color-mix(in srgb,var(--tc) 14%,transparent)}
-.cnm{font-weight:900;font-size:18px}.cnum{font-size:64px;font-weight:900;text-align:center;line-height:1}
+.cnm{font-weight:900;font-size:18px}.csub{font-size:13px;color:var(--muted);margin-top:-6px}.cnum{font-size:64px;font-weight:900;text-align:center;line-height:1}
 .cbtns{display:grid;grid-template-columns:1fr 1.4fr;gap:8px}.cbtns .btn{font-size:22px;padding:14px 0}
 .cside input{font-size:18px;text-align:center}
 /* 演出：人間玉入れ（2コート） */
@@ -425,7 +435,7 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 </head>
 <body>
 <nav id="modebar" aria-label="画面切り替え">
-  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1105b</span></span>
+  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1105c</span></span>
   <a href="#register" data-mode="register">チーム登録</a>
   <a href="#admin" data-mode="admin">管理</a>
   <a href="#present" data-mode="present">演出</a>
@@ -478,23 +488,25 @@ const CONFIG = {
                 { task: '二人三脚', desc: '2人の足をひもで結んで走る。ひもが解けたらその場で結び直し、転んだらその場からリスタート', people: 2 },
                 { task: 'ボトルフリップ', desc: '30秒以内にペットボトルを回転させて床に立てる。できなければ時間が来たら次の走者へ', people: 1 },
                 { task: '腕立て伏せ', desc: 'その場で腕立て10回', people: 1 },
-                { task: 'ぐるぐるバット', desc: '続けるのが難しいと判断したら、次の走者が30秒待ってから再開', people: 1, baton: 'バット' },
+                { task: 'ぐるぐるバット', desc: '5回まわって次の走者へ。続けるのが難しいと判断したら、次の走者が30秒待ってから再開', people: 1, baton: 'バット' },
                 { task: '風船バッティング', desc: 'バットで風船を打ち、次の走者に取ってもらう（次の走者は動かず腕だけ伸ばす）。落としたらスタート地点から', people: 1, baton: '風船' },
                 { task: 'チンチロ', desc: 'お椀にサイコロ2つを投げ、ゾロ目でクリア（お椀の外のゾロ目は無効）', people: 1 },
                 { task: '全力疾走', desc: '20m全力で走る', people: 1 },
               ] },
   },
+  // 障害物競走の前半・後半の組（1組4チーム）。係のストップウォッチ画面で、その場で変えることもできる
+  relayHeats: [['mario', 'link', 'dk', 'yoshi'], ['fox', 'pikachu', 'samus', 'kirby']],
   // 開会式・閉会式のスライドの中身（ここを書き換えれば画面に反映される）
   ceremony: {
-    schedule: [['14:45', 'ラジオ体操', 'Aコート'], ['15:00', '人間玉入れ', 'A・Bコート'], ['15:45', '借り人競争', 'Bコート'],
+    schedule: [['14:45', 'ラジオ体操', 'Aコート'], ['15:00', '人間玉入れ', 'A・Bコート'], ['15:40', '借り人競争', 'Bコート'],
                ['16:35', '障害物競走', 'Bコート'], ['17:00', 'クイズ', 'Bコート'], ['17:30', '閉会式', 'Bコート']],
     prize: ['（優勝商品は準備中）'],
     cautions: ['水分補給しっかり！', '体調が悪くなったら早めに相談！', 'ケガには気をつけて！', 'ゴミは持ち帰る！', '忘れ物に気をつけよう！'],
     party: ['19:30〜 打ち上げ', '詳しくはチャットを見てください'],
-    tamaRules: ['A・Bの2コートで同時に対戦（1試合2チーム）', '各チーム1人が籠を背負う', '制限時間5分、籠に入った玉が多いほうの勝ち',
-                '勝ち20点・引き分け10点・負け0点', '全4試合、各チーム2試合'],
-    kariruRules: ['全8回、各回1チーム1人が走る', '紙に書かれたお題に合う人を借りてゴール', 'ゴールした順に、インタビューでお題に合っているか確認',
-                  '合っていなければ0点、後ろのチームが繰り上がり', '1位20点〜8位1点、全員当たったチームに+10点', '見ている人は座って待つ／次の組は前の人の後ろで待機'],
+    tamaRules: ['相手チームが背負う籠に、たくさん玉を入れよう', 'うちわで相手の邪魔をしに行ってもOK', '玉は全部で30個。全部入れたら、入れ切った時間で勝負',
+                '制限時間5分。勝ち20点・引き分け10点・負け0点', '人を攻撃するなど危ない行動はペナルティ・退場'],
+    kariruRules: ['はじめは全員起立！ 一度選ばれた人は座る', '全8回、各回1チーム1人がお題に合うメンターを連れてゴール', 'ゴールした順に、インタビューでお題に合っているか確認',
+                  '合っていなければ失格（0点）、順位は繰り上げ', '1位20点〜8位1点、チーム全員が選ばれたら +10点'],
   },
   assets: {
     teamImage: id => R(`assets/teams/${id}.png`),
@@ -528,7 +540,8 @@ const EV = CONFIG.events;
 
 function blankState() {
   const s = { rev: 0, locked: false, members: {}, entries: {}, submitted: {},
-    results: { kariru: Array.from({ length: EV.kariru.rounds }, () => []), relay: [], quiz: {}, kehai: {}, radio: {}, kariruBonus: {}, bonus: [] },
+    results: { kariru: Array.from({ length: EV.kariru.rounds }, () => []), relay: [], quiz: {}, kehai: {}, radio: {}, kariruBonus: {}, bonus: [],
+      relayTimes: {}, relayStart: {}, relayHeats: CONFIG.relayHeats.map(h => h.slice()) },
     present: { scene: 'title', step: 0, match: null, event: 'total', nonce: 0, skip: {} } };
   for (const t of CONFIG.teams) {
     s.members[t.id] = [];
@@ -791,7 +804,7 @@ const EVLABEL = { total: '総合順位', radio: EV.radio.name, kehai: EV.kehai.n
 /* =====================================================================
    画面切替
    ===================================================================== */
-function mode() { const h = location.hash.slice(1).split('/')[0]; return ['register', 'admin', 'present', 'viewer', 'court'].includes(h) ? h : 'register'; }
+function mode() { const h = location.hash.slice(1).split('/')[0]; return ['register', 'admin', 'present', 'viewer', 'court', 'kariru', 'relay'].includes(h) ? h : 'register'; }
 const PREVIEW = new URLSearchParams(location.search).has('preview');  // 管理画面に小さく映す確認用（音なし）
 function rerender(remote = false) {
   const m = mode();
@@ -800,10 +813,10 @@ function rerender(remote = false) {
   if (m !== 'present') teardownPresent();
   // 入力中の画面は、他タブからの更新で描き直さない（入力が消えるため）
   const ae = document.activeElement;
-  if (remote && (m === 'register' || m === 'admin' || m === 'court') && ae && ae.matches('input,textarea,select') && ae.closest('#app')) return;
+  if (remote && (m === 'register' || m === 'admin' || m === 'court' || m === 'kariru' || m === 'relay') && ae && ae.matches('input,textarea,select') && ae.closest('#app')) return;
   if (!loaded) { $('#app').innerHTML = `<div class="wrap narrow"><p class="muted">${netErr ? 'データ置き場につながりません。通信を確認してください。' : '読み込み中…'}</p></div>`; return; }
-  if ((m === 'admin' || m === 'present' || m === 'court') && !isStaff()) { renderStaffGate(); return; }
-  ({ register: renderRegister, admin: renderAdmin, present: renderPresent, viewer: renderViewer, court: renderCourt })[m]();
+  if ((m === 'admin' || m === 'present' || m === 'court' || m === 'kariru' || m === 'relay') && !isStaff()) { renderStaffGate(); return; }
+  ({ register: renderRegister, admin: renderAdmin, present: renderPresent, viewer: renderViewer, court: renderCourt, kariru: renderKariruPad, relay: renderRelayPad })[m]();
 }
 /* 運営パスの入力（共有モードのとき、管理・演出の画面で使う） */
 function renderStaffGate() {
@@ -1027,11 +1040,12 @@ function adminResults() {
       <div class="row small"><span class="muted">全員借りられた（+${EV.kariru.bonus}点）：</span>${CONFIG.teams.map(t => `<label style="display:inline-flex;gap:4px;align-items:center"><input type="checkbox" data-krb="${t.id}" ${state.results.kariruBonus[t.id] ? 'checked' : ''}><span class="tdot" style="--tc:${t.color}"></span>${esc(t.name)}</label>`).join('')}</div>
       <p class="muted small">第${krRound + 1}回の出走者：${CONFIG.teams.map(t => `${esc(t.name)} ${esc(state.entries[t.id].kariru[krRound] || '—')}`).join(' ／ ')}</p></section>
 
-    <section class="panel stack"><div class="evhead"><h2>${EV.kehai.name}<span class="tag-prov">得点は仮</span></h2><span class="muted small">両チームの玉数を入れると、多いほうが勝ち。同数のときは勝者（または引き分け）を選ぶ</span></div>
+    <section class="panel stack"><div class="evhead"><h2>${EV.kehai.name}<span class="tag-prov">得点は仮</span></h2><span class="muted small">各チームの得点＝相手の籠に入った玉の数。多いほうが勝ち。同数（全部入れ切った等）のときは勝者か引き分けを選ぶ</span></div>
       <div class="grid2">${EV.kehai.courts.map((c, ci) => `<div class="stack"><b>${esc(c.name)}</b>${MATCHES.filter(d => d.court === c.name).map(d => matchEditor(match(d.id))).join('')}</div>`).join('')}</div></section>
 
     <section class="panel stack"><div class="evhead"><h2>${EV.relay.name}<span class="tag-prov">得点は仮</span></h2></div>
-      <div id="rlBox">${orderPicker(state.results.relay, null, EV.relay)}</div></section>
+      <div id="rlBox">${orderPicker(state.results.relay, null, EV.relay)}</div>
+      ${Object.keys(state.results.relayTimes || {}).length ? `<div class="small muted">ストップウォッチのタイム：${Object.entries(state.results.relayTimes).sort((a, b) => a[1] - b[1]).map(([id, ms]) => `${esc(TEAM[id].name)} ${fmtSec(ms)}`).join('　')}</div>` : ''}</section>
 
     <section class="panel stack"><div class="evhead"><h2>${EV.radio.name}</h2><span class="muted small">ラジオ体操のベストチーム、ファッションポイントなど。何件でも足せます</span></div>
       <div class="row" style="align-items:flex-end">
@@ -1090,9 +1104,9 @@ function matchEditor(m) {
   return `<div class="match"><div class="mh"><b>${m.def.round}</b>${m.done ? `<span class="small">${m.side === 'D' ? '引き分け' : `勝者：<b style="color:var(--gold)">${esc(TEAM[m.winner].name)}</b>`}</span>` : '<span class="muted small">未入力</span>'}</div>
     <div class="row" style="flex-wrap:nowrap;gap:8px;align-items:center">
       <span style="${win(m.L)}flex:1"><span class="tdot" style="--tc:${L.color}"></span>${esc(L.name)}</span>
-      <input type="number" min="0" class="num" style="width:70px" data-ball="${m.id}:a" value="${r.a ?? ''}" aria-label="${esc(L.name)}の玉数">
+      <input type="number" min="0" class="num" style="width:70px" data-ball="${m.id}:a" value="${r.a ?? ''}" aria-label="${esc(L.name)}の得点（${esc(R.name)}の籠の玉）" title="${esc(L.name)}の得点＝${esc(R.name)}の籠の玉">
       <span class="muted">vs</span>
-      <input type="number" min="0" class="num" style="width:70px" data-ball="${m.id}:b" value="${r.b ?? ''}" aria-label="${esc(R.name)}の玉数">
+      <input type="number" min="0" class="num" style="width:70px" data-ball="${m.id}:b" value="${r.b ?? ''}" aria-label="${esc(R.name)}の得点（${esc(L.name)}の籠の玉）" title="${esc(R.name)}の得点＝${esc(L.name)}の籠の玉">
       <span style="${win(m.R)}flex:1;text-align:right">${esc(R.name)}<span class="tdot" style="--tc:${R.color};margin:0 0 0 6px"></span></span></div>
     ${m.tied ? `<div class="warnbox" style="margin-top:8px">同数です。勝者を選んでください。
       <div class="row" style="margin-top:6px"><button class="btn sm ${r.tb === 'L' ? 'on' : ''}" type="button" data-tb="${m.id}:L">${esc(L.name)}</button><button class="btn sm ${!r.tb || r.tb === 'D' ? 'on' : ''}" type="button" data-tb="${m.id}:D">引き分け</button><button class="btn sm ${r.tb === 'R' ? 'on' : ''}" type="button" data-tb="${m.id}:R">${esc(R.name)}</button></div></div>` : ''}</div>`;
@@ -1133,7 +1147,6 @@ const RUN = (() => {
     { label: `${EV.kehai.name} 対戦表（試合前）`, scene: 'bracket' });
   for (let k = 1; k <= 4; k++) r.push({ label: `${EV.kehai.name} 第${k}試合（A・B同時）`, scene: 'tama', round: k });
   r.push({ label: `${EV.kehai.name} 対戦表（結果）`, scene: 'bracket' }, { label: `${EV.kehai.name} 順位発表`, scene: 'rank', event: 'kehai' },
-    brk('15:40', '15:45', EV.kariru.name),
     { label: `${EV.kariru.name} ルール説明`, scene: 'slide', slide: { type: 'list', en: 'RULES', ja: `${EV.kariru.name}　ルール`, key: 'kariruRules' } });
   for (let k = 1; k <= EV.kariru.rounds; k++) r.push({ label: `${EV.kariru.name} 第${k}回`, scene: 'kariru', round: k });
   r.push({ label: `${EV.kariru.name} 順位発表`, scene: 'rank', event: 'kariru' }, brk('16:25', '16:35', EV.relay.name),
@@ -1184,7 +1197,9 @@ function adminControl() {
       <iframe class="adlive" src="${site}?preview=1#present" title="演出画面の確認"></iframe>
       <div class="row small"><a class="btn sm" href="${site}#present" target="_blank" rel="noopener" style="text-decoration:none">演出画面を別ウインドウで開く</a></div>
       <div class="stack small" style="gap:4px"><b>係用の入力画面（運営パスで入る）</b>
-        ${EV.kehai.courts.map((c, i) => `<span>${esc(EV.kehai.name)} ${esc(c.name)}：<code>${esc(site)}#court/${i + 1}</code></span>`).join('')}</div>
+        ${EV.kehai.courts.map((c, i) => `<span>${esc(EV.kehai.name)} ${esc(c.name)}：<code>${esc(site)}#court/${i + 1}</code></span>`).join('')}
+        <span>${esc(EV.kariru.name)}（順位）：<code>${esc(site)}#kariru</code></span>
+        <span>${esc(EV.relay.name)}（ストップウォッチ）：<code>${esc(site)}#relay</code></span></div>
     </section></div>`;
   const at = $('#atab');
   at.querySelectorAll('[data-run]').forEach(b => b.onclick = () => { goRun(+b.dataset.run); adminControl(); });
@@ -1670,15 +1685,16 @@ function renderCourt() {
   const m = match(`C${ci}-${k}`), r = state.results.kehai[m.id] || {}, L = TEAM[m.L], Rt = TEAM[m.R];
   let tm = '';
   if (live === k && p.timerAt && p.step >= 1) { const rem = EV.kehai.minutes * 60000 - Math.max(0, Date.now() - p.timerAt); const sec = Math.ceil(rem / 1000); tm = rem > 0 ? `残り ${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}` : 'TIME UP'; }
-  const side = (t, key, v) => `<div class="cside" style="--tc:${t.color}"><div class="cnm"><span class="tdot" style="--tc:${t.color}"></span>${esc(t.name)}</div>
+  const side = (t, key, v, opp) => `<div class="cside" style="--tc:${t.color}"><div class="cnm"><span class="tdot" style="--tc:${t.color}"></span>${esc(t.name)}の得点</div>
+    <div class="csub">＝ <b style="color:${opp.color}">${esc(opp.name)}</b> の籠に入った玉</div>
     <div class="cnum num">${v ?? '—'}</div>
     <div class="cbtns"><button type="button" class="btn" data-adj="${key}:-1">−1</button><button type="button" class="btn primary" data-adj="${key}:1">＋1</button></div>
     <input type="number" min="0" inputmode="numeric" class="num" data-set="${key}" value="${v ?? ''}" placeholder="直接入力"></div>`;
   $('#app').innerHTML = `<div class="wrap narrow stack court">
     <div class="row" style="justify-content:space-between"><div><div class="eyebrow">${esc(EV.kehai.name)}</div><h1>${esc(c.name)}</h1></div><span class="pill">${tm || (live === k ? '試合前' : '')}</span></div>
     <div class="roundtabs">${[1, 2, 3, 4].map(i => `<button type="button" data-cr="${i}" class="${i === k ? 'on' : ''} ${match(`C${ci}-${i}`).done ? 'full' : ''}">第${i}試合${live === i ? ' ●' : ''}</button>`).join('')}</div>
-    <p class="muted small">試合が終わったら、それぞれの籠に入った玉の数を入れてください。入れた数はすぐに保存されます。</p>
-    <div class="cpair">${side(L, 'a', r.a)}${side(Rt, 'b', r.b)}</div>
+    <p class="muted small">玉は<b>相手の籠</b>に入れる競技です。各チームの得点＝<b>相手チームの籠に入った玉の数</b>を入れてください。入れた数はすぐに保存されます。</p>
+    <div class="cpair">${side(L, 'a', r.a, Rt)}${side(Rt, 'b', r.b, L)}</div>
     ${m.tied ? `<div class="warnbox">同じ数です。勝ったチームを選んでください。<div class="row" style="margin-top:6px">
       <button class="btn sm ${r.tb === 'L' ? 'on' : ''}" data-tb="L" type="button">${esc(L.name)}</button><button class="btn sm ${!r.tb || r.tb === 'D' ? 'on' : ''}" data-tb="D" type="button">引き分け</button><button class="btn sm ${r.tb === 'R' ? 'on' : ''}" data-tb="R" type="button">${esc(Rt.name)}</button></div></div>` : ''}
     <div class="small">${m.done ? (m.side === 'D' ? '結果：引き分け' : `結果：<b style="color:var(--gold)">${esc(TEAM[m.winner].name)}</b> の勝ち`) : '<span class="muted">両方の玉数を入れると結果が出ます</span>'}</div></div>`;
@@ -1688,6 +1704,123 @@ function renderCourt() {
   $('#app').querySelectorAll('[data-set]').forEach(i => i.onchange = () => { const o = rec(); o[i.dataset.set] = i.value === '' ? undefined : Math.max(0, Number(i.value)); o.tb = undefined; save(); renderCourt(); });
   $('#app').querySelectorAll('[data-tb]').forEach(b => b.onclick = () => { rec().tb = b.dataset.tb; save(); renderCourt(); });
   clearTimeout(renderCourt.t); if (live === k && p.timerAt) renderCourt.t = setTimeout(() => { if (mode() === 'court' && !(document.activeElement && document.activeElement.matches('input'))) renderCourt(); }, 1000);
+}
+
+/* =====================================================================
+   係用：借り人競争の順位（#kariru）
+   ===================================================================== */
+let krPad = null;  // 今見ている回（1〜8、9 は「全員選ばれた」）
+function renderKariruPad() {
+  const R = EV.kariru.rounds, p = state.present;
+  if (krPad == null) krPad = (p.scene === 'kariru' && p.round) || (state.results.kariru.findIndex(o => !o.length) + 1) || R + 1;
+  const k = krPad;
+  const nav = `<div class="row" style="flex-wrap:nowrap;gap:8px"><button class="btn" type="button" id="kpPrev" style="flex:1" ${k <= 1 ? 'disabled' : ''}>◀ 前の回</button>
+    <button class="btn primary" type="button" id="kpNext" style="flex:1" ${k > R ? 'disabled' : ''}>${k >= R ? '全員選ばれたチームへ ▶' : '次の回へ ▶'}</button></div>`;
+  let body;
+  if (k > R) {
+    body = `<div><div class="eyebrow">${esc(EV.kariru.name)}</div><h1>全員選ばれたチーム</h1></div>
+      <p class="muted small">チーム全員が誰かに選ばれたチームを押してください（+${EV.kariru.bonus}点）。もう一度押すと外れます。</p>
+      <div class="padgrid">${CONFIG.teams.map(t => `<button type="button" class="padbtn ${state.results.kariruBonus[t.id] ? 'on' : ''}" data-kb="${t.id}" style="--tc:${t.color}">
+        <b>${esc(t.name)}</b><span>${state.results.kariruBonus[t.id] ? `+${EV.kariru.bonus}` : ''}</span></button>`).join('')}</div>`;
+  } else {
+    const order = state.results.kariru[k - 1];
+    body = `<div class="row" style="justify-content:space-between"><div><div class="eyebrow">${esc(EV.kariru.name)}</div><h1>第${k}回</h1></div>
+        <span class="pill">${order.length} / ${CONFIG.teams.length} チーム</span></div>
+      <p class="muted small">お題に合っていると確認できたチームを、ゴールした順に押してください。押したチームをもう一度押すと外れて、後ろが繰り上がります。押さなかったチームは0点です。</p>
+      <div class="padgrid">${CONFIG.teams.map(t => { const i = order.indexOf(t.id);
+        return `<button type="button" class="padbtn ${i >= 0 ? 'on' : ''}" data-kp="${t.id}" style="--tc:${t.color}"><b>${esc(t.name)}</b>
+          <small>${esc(state.entries[t.id].kariru[k - 1] || '')}</small><span>${i >= 0 ? `${i + 1}位<em>+${EV.kariru.points[i] || 0}</em>` : ''}</span></button>`; }).join('')}</div>
+      <div class="row" style="gap:8px"><button class="btn sm" type="button" id="kpUndo" ${order.length ? '' : 'disabled'}>1つ戻す</button><button class="btn sm" type="button" id="kpClear" ${order.length ? '' : 'disabled'}>この回をやり直す</button></div>`;
+  }
+  $('#app').innerHTML = `<div class="wrap narrow stack pad"><div class="roundtabs">${Array.from({ length: R }, (_, i) => `<button type="button" data-kr="${i + 1}" class="${i + 1 === k ? 'on' : ''} ${state.results.kariru[i].length ? 'full' : ''}">${i + 1}</button>`).join('')}<button type="button" data-kr="${R + 1}" class="${k > R ? 'on' : ''}">全員</button></div>${body}${nav}</div>`;
+  const go = n => { krPad = n; renderKariruPad(); };
+  $('#app').querySelectorAll('[data-kr]').forEach(b => b.onclick = () => go(+b.dataset.kr));
+  $('#kpPrev').onclick = () => go(Math.max(1, k - 1));
+  $('#kpNext').onclick = () => go(Math.min(R + 1, k + 1));
+  $('#app').querySelectorAll('[data-kp]').forEach(b => b.onclick = () => {
+    const o = state.results.kariru[k - 1], id = b.dataset.kp, i = o.indexOf(id);
+    if (i >= 0) o.splice(i, 1); else o.push(id);
+    save(); renderKariruPad();
+  });
+  $('#app').querySelectorAll('[data-kb]').forEach(b => b.onclick = () => { const id = b.dataset.kb; state.results.kariruBonus[id] = !state.results.kariruBonus[id]; save(); renderKariruPad(); });
+  const u = $('#kpUndo'); if (u) u.onclick = () => { state.results.kariru[k - 1].pop(); save(); renderKariruPad(); };
+  const c = $('#kpClear'); if (c) c.onclick = () => {
+    if (c.dataset.armed !== '1') { c.dataset.armed = '1'; c.textContent = 'もう一度押すと消えます'; setTimeout(() => { if (c.isConnected) { c.dataset.armed = ''; c.textContent = 'この回をやり直す'; } }, 3000); return; }
+    state.results.kariru[k - 1].length = 0; save(); renderKariruPad();
+  };
+}
+
+/* =====================================================================
+   係用：障害物競走のストップウォッチ（#relay）。前半・後半4チームずつ、タイムで8チームの順位を出す
+   ===================================================================== */
+let rlTab = null, rlEdit = false, rlTick = null;
+function fmtSec(ms) { return ms == null ? '—' : `${Math.floor(ms / 60000)}:${(ms % 60000 / 1000).toFixed(2).padStart(5, '0')}`; }
+function relayHeats() { const h = state.results.relayHeats; return Array.isArray(h) && h.length === 2 ? h : CONFIG.relayHeats.map(x => x.slice()); }
+function relayRanking() {
+  const T = state.results.relayTimes || {};
+  return CONFIG.teams.map(t => ({ t, ms: T[t.id] })).sort((a, b) => (a.ms ?? Infinity) - (b.ms ?? Infinity));
+}
+function renderRelayPad() {
+  clearInterval(rlTick);
+  const R = state.results, heats = relayHeats();
+  R.relayTimes = R.relayTimes || {}; R.relayStart = R.relayStart || {};
+  if (rlTab == null) rlTab = heats[0].every(id => R.relayTimes[id] != null) ? (heats[1].every(id => R.relayTimes[id] != null) ? 2 : 1) : 0;
+  const tabs = `<div class="roundtabs">${['前半', '後半', '順位'].map((n, i) => `<button type="button" data-rt="${i}" class="${rlTab === i ? 'on' : ''}">${n}</button>`).join('')}</div>`;
+  let body = '';
+  if (rlTab < 2) {
+    const h = rlTab, ids = heats[h], st = R.relayStart[h];
+    const done = ids.filter(id => R.relayTimes[id] != null).sort((a, b) => R.relayTimes[a] - R.relayTimes[b]);
+    if (rlEdit) {
+      body = `<h1>${h ? '後半' : '前半'}の組を選ぶ</h1><p class="muted small">走る4チームを押してください（もう片方の組は残りの4チームになります）。</p>
+        <div class="padgrid">${CONFIG.teams.map(t => `<button type="button" class="padbtn ${ids.includes(t.id) ? 'on' : ''}" data-rp="${t.id}" style="--tc:${t.color}"><b>${esc(t.name)}</b></button>`).join('')}</div>
+        <button class="btn primary" type="button" id="rpDone" ${ids.length === 4 ? '' : 'disabled'}>この組で決定（${ids.length}/4）</button>`;
+    } else {
+      body = `<div class="row" style="justify-content:space-between"><div><div class="eyebrow">${esc(EV.relay.name)}</div><h1>${h ? '後半' : '前半'}</h1></div>
+          <button class="btn sm" type="button" id="rpEdit" ${st ? 'disabled' : ''}>組を変える</button></div>
+        <div class="swatch num" id="rpClock">${st ? fmtSec(Date.now() - st) : '0:00.00'}</div>
+        ${st ? '' : `<button class="btn primary big" type="button" id="rpStart">スタート</button>`}
+        <p class="muted small">${st ? 'ゴールした順にチームを押してください（押した瞬間のタイムが入ります）。押し間違えたら、もう一度押すと取り消せます。' : 'スタートの合図と同時に押してください。'}</p>
+        <div class="padgrid">${ids.map(id => { const t = TEAM[id], ms = R.relayTimes[id], i = done.indexOf(id);
+          return `<button type="button" class="padbtn ${ms != null ? 'on' : ''}" data-rg="${id}" style="--tc:${t.color}" ${st ? '' : 'disabled'}><b>${esc(t.name)}</b><span>${ms != null ? `${i + 1}着<em class="num">${fmtSec(ms)}</em>` : ''}</span></button>`; }).join('')}</div>
+        <button class="btn sm" type="button" id="rpReset" ${st || done.length ? '' : 'disabled'}>この組をやり直す</button>`;
+    }
+  } else {
+    const list = relayRanking(), cur = R.relay || [];
+    body = `<div><div class="eyebrow">${esc(EV.relay.name)}</div><h1>8チームの順位（タイム順）</h1></div>
+      <div class="mlist">${list.map((r, i) => `<div class="mline"><span><b>${r.ms != null ? i + 1 + '位' : '—'}</b>　<span class="tdot" style="--tc:${r.t.color}"></span>${esc(r.t.name)}</span><span class="score num">${fmtSec(r.ms)}</span><span class="r muted small">${r.ms != null ? `+${EV.relay.points[i] || 0}点` : '記録なし（0点）'}</span></div>`).join('')}</div>
+      <button class="btn primary" type="button" id="rpCommit" ${list.some(r => r.ms != null) ? '' : 'disabled'}>この順位で確定する</button>
+      <p class="small ${cur.length ? '' : 'muted'}">${cur.length ? `いま結果に入っている順位：${cur.map((id, i) => `${i + 1}位 ${esc(TEAM[id].name)}`).join('　')}` : 'まだ結果に入っていません'}</p>`;
+  }
+  $('#app').innerHTML = `<div class="wrap narrow stack pad">${tabs}${body}</div>`;
+  $('#app').querySelectorAll('[data-rt]').forEach(b => b.onclick = () => { rlTab = +b.dataset.rt; rlEdit = false; renderRelayPad(); });
+  const h = rlTab;
+  if (rlTab < 2 && !rlEdit) {
+    const st = R.relayStart[h];
+    if (st) rlTick = setInterval(() => { const e = $('#rpClock'); if (!e || mode() !== 'relay') return clearInterval(rlTick); e.textContent = fmtSec(Date.now() - (state.results.relayStart || {})[h]); }, 50);
+    const sb = $('#rpStart'); if (sb) sb.onclick = () => { state.results.relayStart[h] = Date.now(); save(); renderRelayPad(); };
+    const eb = $('#rpEdit'); if (eb) eb.onclick = () => { rlEdit = true; renderRelayPad(); };
+    $('#app').querySelectorAll('[data-rg]').forEach(b => b.onclick = () => {
+      const now = Date.now(), r = state.results, id = b.dataset.rg, s0 = r.relayStart[h]; if (!s0) return;
+      if (r.relayTimes[id] != null) delete r.relayTimes[id]; else r.relayTimes[id] = now - s0;
+      save(); renderRelayPad();
+    });
+    const rb = $('#rpReset'); if (rb) rb.onclick = () => {
+      if (rb.dataset.armed !== '1') { rb.dataset.armed = '1'; rb.textContent = 'もう一度押すとこの組のタイムを消します'; setTimeout(() => { if (rb.isConnected) { rb.dataset.armed = ''; rb.textContent = 'この組をやり直す'; } }, 3000); return; }
+      const r = state.results; delete r.relayStart[h]; relayHeats()[h].forEach(id => delete r.relayTimes[id]); save(); renderRelayPad();
+    };
+  }
+  if (rlTab < 2 && rlEdit) {
+    $('#app').querySelectorAll('[data-rp]').forEach(b => b.onclick = () => {
+      const hs = relayHeats().map(x => x.slice()), id = b.dataset.rp, mine = hs[h];
+      if (mine.includes(id)) mine.splice(mine.indexOf(id), 1); else if (mine.length < 4) mine.push(id);
+      hs[1 - h] = CONFIG.teams.map(t => t.id).filter(x => !mine.includes(x));
+      state.results.relayHeats = hs; save(); renderRelayPad();
+    });
+    const d = $('#rpDone'); if (d) d.onclick = () => { rlEdit = false; renderRelayPad(); };
+  }
+  const cm = $('#rpCommit'); if (cm) cm.onclick = () => {
+    state.results.relay = relayRanking().filter(r => r.ms != null).map(r => r.t.id); save(); renderRelayPad(); toast('順位を結果に入れました');
+  };
 }
 
 /* =====================================================================
