@@ -454,7 +454,7 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 </head>
 <body>
 <nav id="modebar" aria-label="画面切り替え">
-  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1106f</span></span>
+  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1106g</span></span>
   <a href="#register" data-mode="register">チーム登録</a>
   <a href="#admin" data-mode="admin">管理</a>
   <a href="#present" data-mode="present">演出</a>
@@ -548,7 +548,8 @@ const CONFIG = {
       // 3・2・1・GO! が1本に入った音声。countdownAt は各カウントが鳴る時刻（ミリ秒）
       countdown: 'assets/sfx/countdown.mp3', countdownAt: [0, 1040, 2020, 3000],
       reveal: 'assets/sfx/reveal.mp3', win: 'assets/sfx/win.mp3', timeup: 'assets/sfx/quiz_close.mp3',
-      bgm: 'assets/bgm/tomoshibi.mp3', gameset: 'assets/sfx/gameset.mp3',
+      bgm: 'assets/bgm/tomoshibi.mp3', bgmRare: 'assets/bgm/vivant.mp3', bgmRareEvery: 3,  // 3曲に1回 VIVANT
+      gameset: 'assets/sfx/gameset.mp3',
       page: 'assets/sfx/page.mp3',  // 場面をめくったときの音（voice/sentaku.mp3 から作った）
     },
   },
@@ -1295,7 +1296,7 @@ function presentKey(e) {
   if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 'Enter') { e.preventDefault(); advance(1); }
   else if (e.key === 'ArrowLeft' || e.key === 'Backspace') { e.preventDefault(); advance(-1); }
   else if (e.key === 'f' || e.key === 'F') { (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.())?.catch?.(() => {}); }
-  else if (e.key === 'm' || e.key === 'M') { muted = !muted; }
+  else if (e.key === 'm' || e.key === 'M') { muted = !muted; if (BGM_EL) { if (muted) BGM_EL.pause(); else if (!(P && P.bgmHeld)) BGM_EL.play().catch(() => {}); } }
   else if (e.key === 'Escape' && !document.fullscreenElement) { location.hash = '#admin'; }
   showHint();
 }
@@ -1312,7 +1313,7 @@ function renderPresent() {
     if (PREVIEW) muted = true;
     window.addEventListener('resize', fitStage); if (!PREVIEW) window.addEventListener('keydown', presentKey);
     fitStage(); showHint();
-    const gate = $('#gate'); if (gate) gate.onclick = () => { P_unlocked = true; gate.remove(); play(CONFIG.assets.sfx.bgm, .35, true); };  // BGM（灯火の星）は繰り返し
+    const gate = $('#gate'); if (gate) gate.onclick = () => { P_unlocked = true; gate.remove(); startBgm(); };
     $('#presentRoot').addEventListener('mousemove', showHint);
   }
   const p = state.present;
@@ -1580,7 +1581,25 @@ function setStageBg() {
   if (img.getAttribute('src') !== src) { img.style.visibility = ''; img.src = src; }
 }
 function holdBgm() { const b = bgmAudio(); if (b && !b.paused) { b.pause(); if (P) P.bgmHeld = true; } }
-function bgmAudio() { return audioCache[R(CONFIG.assets.sfx.bgm)] || null; }
+function bgmAudio() { return BGM_EL; }
+/* 演出のBGM：灯火の星を流し、1曲終わるごとに次の曲へ。bgmRareEvery 曲に1回は VIVANT */
+let BGM_EL = null, bgmCount = 0;
+function startBgm() {
+  if (muted || PREVIEW) return;
+  if (!BGM_EL) {
+    BGM_EL = new Audio(); BGM_EL.volume = .35;
+    BGM_EL.addEventListener('ended', nextBgm);
+    BGM_EL.addEventListener('error', () => { if (BGM_EL.dataset.rare === '1') { BGM_EL.dataset.rare = ''; BGM_EL.src = R(CONFIG.assets.sfx.bgm); BGM_EL.play().catch(() => {}); } });
+  }
+  if (!BGM_EL.src) nextBgm(); else BGM_EL.play().catch(() => {});
+}
+function nextBgm() {
+  const A = CONFIG.assets.sfx; bgmCount++;
+  const rare = A.bgmRare && A.bgmRareEvery && bgmCount % A.bgmRareEvery === 0;
+  BGM_EL.dataset.rare = rare ? '1' : '';
+  BGM_EL.src = R(rare ? A.bgmRare : A.bgm);
+  if (!(P && P.bgmHeld)) BGM_EL.play().catch(() => {});
+}
 
 /* 開会式・閉会式のスライド（中身は CONFIG.ceremony） */
 function buildSlide(el) {
