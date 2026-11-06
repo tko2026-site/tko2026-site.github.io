@@ -397,6 +397,11 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 .sl-list{position:absolute;left:150px;right:150px;top:230px;display:flex;flex-direction:column;gap:20px}
 .sl-list div{background:rgba(11,16,36,.82);border-left:12px solid var(--gold);padding:16px 40px;font-size:54px}
 .sl-list.big{top:300px;left:100px;right:100px;align-items:center}.sl-list.big div{font-size:80px;border-left:0;text-align:center;padding:24px 70px}
+.sl-mys{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center}
+.sl-mys .en{font-family:var(--f-display);font-size:60px;letter-spacing:.25em;color:var(--gold);animation:fadeIn .5s both}
+.sl-mys .q{font-family:var(--f-display);font-size:420px;line-height:1;color:var(--gold);-webkit-text-stroke:12px #0b1024;paint-order:stroke fill;text-shadow:0 0 60px rgba(255,210,63,.6);animation:popIn .7s .1s both,mysFloat 2.4s 1s ease-in-out infinite}
+@keyframes mysFloat{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-24px) rotate(4deg)}}
+.sl-mys .t{font-family:var(--f-display);font-size:110px;color:#fff;-webkit-text-stroke:6px #0b1024;paint-order:stroke fill;transform:skewX(-8deg);max-width:1760px;padding:0 20px;animation:fadeUp .5s .7s both}
 .sl-big{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px}
 .sl-big .en{font-family:var(--f-display);font-size:64px;letter-spacing:.2em;color:var(--gold);animation:fadeIn .5s both}
 .sl-big .main{font-family:var(--f-display);font-size:190px;line-height:1.25;max-width:1760px;padding:0 20px;color:#fff;-webkit-text-stroke:8px #0b1024;paint-order:stroke fill;transform:skewX(-8deg);animation:popIn .6s .15s both}
@@ -435,7 +440,7 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 </head>
 <body>
 <nav id="modebar" aria-label="画面切り替え">
-  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1105d</span></span>
+  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1106a</span></span>
   <a href="#register" data-mode="register">チーム登録</a>
   <a href="#admin" data-mode="admin">管理</a>
   <a href="#present" data-mode="present">演出</a>
@@ -1137,7 +1142,7 @@ const RUN = (() => {
   const r = [{ label: 'オープニング（タイトル）', scene: 'title' },
     toc('開会式', OP, 0), { label: '開会式：本日の流れ', scene: 'slide', slide: { type: 'schedule' } },
     toc('開会式', OP, 1), { label: '開会式：得点について', scene: 'slide', slide: { type: 'points' } },
-    toc('開会式', OP, 2), { label: '開会式：優勝商品の紹介', scene: 'slide', slide: { type: 'list', en: 'PRIZE', ja: '優勝商品の紹介', key: 'prize', big: true } },
+    toc('開会式', OP, 2), { label: '開会式：優勝商品の紹介', scene: 'slide', slide: { type: 'mystery', en: 'PRIZE', text: '優勝賞品ございます！', stage: true } },
     toc('開会式', OP, 3), { label: 'チーム紹介', scene: 'teams' },
     toc('開会式', OP, 4), { label: '開会式：注意事項', scene: 'slide', slide: { type: 'list', en: 'NOTICE', ja: '注意事項', key: 'cautions' } },
     { label: '参戦ムービー', scene: 'video', src: CONFIG.assets.sansen },
@@ -1156,7 +1161,7 @@ const RUN = (() => {
     { label: '閉会式（タイトル）', scene: 'slide', slide: { type: 'big', en: 'CLOSING CEREMONY', main: '閉会式', stage: true } },
     toc('閉会式', CL, 0), { label: '閉会式：追加点の発表（全部）', scene: 'bonus' }, { label: '閉会式：総合順位発表（棒グラフ）→ 優勝', scene: 'finalbars' },
     toc('閉会式', CL, 1), { label: '閉会式：優勝団長挨拶', scene: 'slide', slide: { type: 'big', en: 'CHAMPION', main: '@winner', sub: '優勝団長挨拶', stage: true } },
-    toc('閉会式', CL, 2), { label: '閉会式：優勝商品贈呈', scene: 'slide', slide: { type: 'list', en: 'PRIZE', ja: '優勝商品贈呈', key: 'prize', big: true } },
+    toc('閉会式', CL, 2), { label: '閉会式：優勝商品贈呈', scene: 'slide', slide: { type: 'mystery', en: 'PRIZE', text: '優勝賞品ございます！', stage: true } },
     toc('閉会式', CL, 3), { label: '閉会式：打ち上げ案内', scene: 'slide', slide: { type: 'list', en: 'AFTER PARTY', ja: '打ち上げ案内', key: 'party', big: true } },
     { label: '閉会（ありがとうございました）', scene: 'slide', slide: { type: 'big', en: 'THANK YOU', main: 'ありがとうございました！', sub: 'TKO2026 閉会', stage: true } },
     { label: '集合写真タイム', scene: 'slide', slide: { type: 'big', en: 'PHOTO TIME', main: '集合写真タイム', stage: true } });
@@ -1561,6 +1566,8 @@ function buildSlide(el) {
       [EV.quiz.name, `最大 ${EV.quiz.max}点`],
       ['ボーナス', `ラジオ体操・特別賞など +${EV.radio.points}点`]];
     body = band('POINTS', '得点について') + `<div class="sl-pts">${rows.map(([n, a, b], i) => `<div style="--d:${i * .07}s"><b class="fit">${esc(n)}</b><span><em class="fit">${esc(a)}</em>${b ? `<small class="fit">${esc(b)}</small>` : ''}</span></div>`).join('')}</div>`;
+  } else if (sd.type === 'mystery') {
+    body = `<div class="sl-mys"><div class="en">${esc(sd.en || '')}</div><div class="q">？</div><div class="t fit">${esc(sd.text || '')}</div></div>`;
   } else if (sd.type === 'list') {
     const items = C[sd.key] || [];
     body = band(sd.en, sd.ja) + `<div class="sl-list ${sd.big ? 'big' : ''}">${items.map((x, i) => `<div class="fit" style="--d:${i * .08}s">${esc(x)}</div>`).join('')}</div>`;
