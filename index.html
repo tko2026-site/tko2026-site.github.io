@@ -211,6 +211,10 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 .ctl{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:16px;align-items:start}
 @media (max-width:900px){.ctl{grid-template-columns:1fr}}
 .runlist{gap:4px}
+.qrgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.qritem{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px;border:1px solid var(--line);border-radius:8px;text-align:center}
+.qritem svg{width:130px;height:130px;background:#fff;border-radius:4px}
+.qritem code{font-size:10px;word-break:break-all}
 .runline{display:flex;gap:6px;align-items:stretch}.runline .runrow{flex:1;min-width:0}
 .skipchk{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);white-space:nowrap;padding:0 6px;cursor:pointer}
 .runline.skip .runrow{opacity:.35;text-decoration:line-through}
@@ -446,7 +450,7 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 </head>
 <body>
 <nav id="modebar" aria-label="画面切り替え">
-  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1106b</span></span>
+  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1106c</span></span>
   <a href="#register" data-mode="register">チーム登録</a>
   <a href="#admin" data-mode="admin">管理</a>
   <a href="#present" data-mode="present">演出</a>
@@ -458,6 +462,7 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 </nav>
 <main id="app"></main>
 
+<script async src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" onload="if (typeof mode === 'function' && mode() === 'admin' && document.querySelector('.qrgrid')) adminControl()"></script>
 <script>
 /* =====================================================================
    設定（ここを書き換えればチーム名・色・パスコード・種目・得点が変わる）
@@ -467,6 +472,7 @@ const CONFIG = {
   api: 'https://script.google.com/macros/s/AKfycbwhBCyRRfEpK5CwRMRNU7HQGSCQnomZynyNkdOiRyvspXIrI1gw7UFJMxrhGJPzu2cb/exec',
   maxMembers: 8,  // 1チームの名簿の最大人数
   eventTitle: 'TKO2026',
+  publicUrl: 'https://tko2026-site.github.io/',  // スマホに配るアドレス（Mac版から開いていても、係のスマホにはこちらを渡す）
   eventSubtitle: 'チーム対抗戦',
   // id は素材ファイル名に使う（assets/teams/<id>.png, assets/voice/<id>.mp3）
   teams: [
@@ -1195,6 +1201,15 @@ function advance(d) {
   if (d > 0) { if (p.step < maxStep()) stepBy(1); else { const i = nextRun(p.run, 1); if (i != null) goRun(i); } }
   else { if (p.step > 0) stepBy(-1); else { const i = nextRun(p.run, -1); if (i != null) goRun(i); } }
 }
+// 係のスマホ用のアドレス（Mac版から開いていても公開版のアドレスを出す）
+function staffLinks() {
+  const pub = CONFIG.publicUrl || location.href.split('#')[0].split('?')[0];
+  return [...EV.kehai.courts.map((c, i) => ({ label: `${EV.kehai.name} ${c.name}`, url: `${pub}#court/${i + 1}` })),
+    { label: `${EV.kariru.name}（順位）`, url: `${pub}#kariru` }, { label: `${EV.relay.name}（ストップウォッチ）`, url: `${pub}#relay` }];
+}
+function qrSvg(text) {
+  try { const q = qrcode(0, 'M'); q.addData(text); q.make(); return q.createSvgTag({ cellSize: 3, margin: 2, scalable: true }); } catch (e) { return ''; }
+}
 function adminControl() {
   const p = state.present, cur = p.run != null && p.run < RUN.length ? p.run : -1;  // 進行表が短くなったときの古い位置は無視
   const site = location.href.split('#')[0].split('?')[0];
@@ -1209,10 +1224,8 @@ function adminControl() {
       <div class="eyebrow" style="margin-top:6px">プロジェクターに映っている画面（音なし）</div>
       <iframe class="adlive" src="${site}?preview=1#present" title="演出画面の確認"></iframe>
       <div class="row small"><a class="btn sm" href="${site}#present" target="_blank" rel="noopener" style="text-decoration:none">演出画面を別ウインドウで開く</a></div>
-      <div class="stack small" style="gap:4px"><b>係用の入力画面（運営パスで入る）</b>
-        ${EV.kehai.courts.map((c, i) => `<span>${esc(EV.kehai.name)} ${esc(c.name)}：<code>${esc(site)}#court/${i + 1}</code></span>`).join('')}
-        <span>${esc(EV.kariru.name)}（順位）：<code>${esc(site)}#kariru</code></span>
-        <span>${esc(EV.relay.name)}（ストップウォッチ）：<code>${esc(site)}#relay</code></span></div>
+      <div class="stack small" style="gap:6px"><b>係用の入力画面（スマホで開く・運営パスで入る）</b>
+        <div class="qrgrid">${staffLinks().map(l => `<div class="qritem">${qrSvg(l.url)}<b>${esc(l.label)}</b><code>${esc(l.url)}</code></div>`).join('')}</div></div>
     </section></div>`;
   const at = $('#atab');
   at.querySelectorAll('[data-run]').forEach(b => b.onclick = () => { goRun(+b.dataset.run); adminControl(); });
