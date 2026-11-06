@@ -401,6 +401,10 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 .sl-list{position:absolute;left:150px;right:150px;top:230px;display:flex;flex-direction:column;gap:20px}
 .sl-list div{background:rgba(11,16,36,.82);border-left:12px solid var(--gold);padding:16px 40px;font-size:54px}
 .sl-list.big{top:300px;left:100px;right:100px;align-items:center}.sl-list.big div{font-size:80px;border-left:0;text-align:center;padding:24px 70px}
+.sl-gs{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+.sl-gs .gs{font-family:var(--f-display);font-size:260px;line-height:1;color:#fff;-webkit-text-stroke:12px #0b1024;paint-order:stroke fill;transform:skewX(-10deg);text-shadow:0 0 80px rgba(255,64,87,.7);animation:gsIn .5s cubic-bezier(.2,1.6,.4,1) both;white-space:nowrap}
+@keyframes gsIn{0%{opacity:0;transform:skewX(-10deg) scale(3)}100%{opacity:1;transform:skewX(-10deg) scale(1)}}
+.sl-gs .sub{font-family:var(--f-display);font-size:80px;color:#0b1024;background:var(--gold);padding:6px 50px;transform:skewX(-10deg);animation:fadeUp .4s .6s both}
 .sl-mys{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center}
 .sl-mys .en{font-family:var(--f-display);font-size:60px;letter-spacing:.25em;color:var(--gold);animation:fadeIn .5s both}
 .sl-mys .q{font-family:var(--f-display);font-size:420px;line-height:1;color:var(--gold);-webkit-text-stroke:12px #0b1024;paint-order:stroke fill;text-shadow:0 0 60px rgba(255,210,63,.6);animation:popIn .7s .1s both,mysFloat 2.4s 1s ease-in-out infinite}
@@ -450,7 +454,7 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 </head>
 <body>
 <nav id="modebar" aria-label="画面切り替え">
-  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1106d</span></span>
+  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1106e</span></span>
   <a href="#register" data-mode="register">チーム登録</a>
   <a href="#admin" data-mode="admin">管理</a>
   <a href="#present" data-mode="present">演出</a>
@@ -544,7 +548,7 @@ const CONFIG = {
       // 3・2・1・GO! が1本に入った音声。countdownAt は各カウントが鳴る時刻（ミリ秒）
       countdown: 'assets/sfx/countdown.mp3', countdownAt: [0, 1040, 2020, 3000],
       reveal: 'assets/sfx/reveal.mp3', win: 'assets/sfx/win.mp3', timeup: 'assets/sfx/quiz_close.mp3',
-      bgm: 'assets/sfx/bgm.mp3',
+      bgm: 'assets/sfx/bgm.mp3', gameset: 'assets/sfx/gameset.mp3',
       page: 'assets/sfx/page.mp3',  // 場面をめくったときの音（voice/sentaku.mp3 から作った）
     },
   },
@@ -1171,7 +1175,8 @@ const RUN = (() => {
   r.push({ label: `${EV.kariru.name} 順位発表`, scene: 'rank', event: 'kariru' }, brk('16:25', '16:35', EV.relay.name),
     { label: `${EV.relay.name} 種目紹介`, scene: 'relay' }, { label: `${EV.relay.name} 順位発表`, scene: 'rank', event: 'relay' },
     brk('16:50', '17:00', 'クイズ（スマホで参加の準備）'),
-    { label: 'クイズ（クイズの画面に切り替える）', scene: 'quiz' }, { label: '集計中（17:20〜 閉会式まで）', scene: 'tally' },
+    { label: 'クイズ（クイズの画面に切り替える）', scene: 'quiz' },
+    { label: 'GAME SET（全種目終了）', scene: 'slide', slide: { type: 'gameset', stage: true } }, { label: '集計中（17:20〜 閉会式まで）', scene: 'tally' },
     { label: '閉会式（タイトル）', scene: 'slide', slide: { type: 'big', en: 'CLOSING CEREMONY', main: '閉会式', stage: true } },
     toc('閉会式', CL, 0), { label: '閉会式：追加点の発表（全部）', scene: 'bonus' }, { label: '閉会式：総合順位発表（棒グラフ）→ 優勝', scene: 'finalbars' },
     toc('閉会式', CL, 1), { label: '閉会式：優勝団長挨拶', scene: 'slide', slide: { type: 'big', en: 'CHAMPION', main: '@winner', sub: '優勝団長挨拶', stage: true } },
@@ -1314,7 +1319,8 @@ function renderPresent() {
   const key = `${p.scene}|${p.match}|${p.event}|${p.round}|${p.nonce}`;
   const sceneEl = $('#scene');
   if (key !== P.key) {
-    if (P.key !== null && p.scene !== 'video') play(CONFIG.assets.sfx.page, .9);  // めくった音（開いた直後と動画の場面では鳴らさない）
+    const itNow = curRun();
+    if (P.key !== null && p.scene !== 'video' && !(itNow && itNow.slide && itNow.slide.type === 'gameset')) play(CONFIG.assets.sfx.page, .9);  // めくった音（開いた直後と動画の場面では鳴らさない）
     P.timers.forEach(clearTimeout); P.timers = [];
     setStageBg();
     stopBreakBgm();
@@ -1590,6 +1596,9 @@ function buildSlide(el) {
       [EV.quiz.name, `最大 ${EV.quiz.max}点`],
       ['ボーナス', `ラジオ体操・特別賞など +${EV.radio.points}点`]];
     body = band('POINTS', '得点について') + `<div class="sl-pts">${rows.map(([n, a, b], i) => `<div style="--d:${i * .07}s"><b class="fit">${esc(n)}</b><span><em class="fit">${esc(a)}</em>${b ? `<small class="fit">${esc(b)}</small>` : ''}</span></div>`).join('')}</div>`;
+  } else if (sd.type === 'gameset') {
+    body = `<div class="sl-gs"><div class="gs">GAME SET!</div><div class="sub">全種目終了！</div></div>`;
+    if (!PREVIEW) later(() => play(CONFIG.assets.sfx.gameset, 1), 150);
   } else if (sd.type === 'mystery' || sd.type === 'reveal') {
     body = `<div class="sl-mys" id="slMys"><div class="en">${esc(sd.en || '')}</div><div class="q">？</div><div class="t fit">${esc(sd.text || '')}</div></div>`;
     if (sd.type === 'reveal') body += `<div class="sl-rev" id="slRev" hidden><div class="en">${esc(sd.en || '')}</div>
