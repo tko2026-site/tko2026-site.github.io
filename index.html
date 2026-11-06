@@ -402,6 +402,12 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 .sl-mys .q{font-family:var(--f-display);font-size:420px;line-height:1;color:var(--gold);-webkit-text-stroke:12px #0b1024;paint-order:stroke fill;text-shadow:0 0 60px rgba(255,210,63,.6);animation:popIn .7s .1s both,mysFloat 2.4s 1s ease-in-out infinite}
 @keyframes mysFloat{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-24px) rotate(4deg)}}
 .sl-mys .t{font-family:var(--f-display);font-size:110px;color:#fff;-webkit-text-stroke:6px #0b1024;paint-order:stroke fill;transform:skewX(-8deg);max-width:1760px;padding:0 20px;animation:fadeUp .5s .7s both}
+.sl-rev{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;text-align:center}
+.sl-rev .en{font-family:var(--f-display);font-size:60px;letter-spacing:.25em;color:var(--gold)}
+.sl-rev .imgs{display:flex;gap:48px;justify-content:center}
+.sl-rev .imgs img{height:560px;max-width:780px;object-fit:cover;border-radius:24px;border:8px solid #fff;box-shadow:0 20px 60px rgba(0,0,0,.6);animation:popIn2 .6s var(--d) cubic-bezier(.2,1.4,.4,1) both}
+@keyframes popIn2{from{opacity:0;transform:scale(.4) rotate(-6deg)}to{opacity:1;transform:none}}
+.sl-rev .t{font-family:var(--f-display);font-size:100px;color:var(--gold);-webkit-text-stroke:6px #0b1024;paint-order:stroke fill;transform:skewX(-8deg);max-width:1760px;padding:0 20px;animation:fadeUp .5s .5s both}
 .sl-big{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px}
 .sl-big .en{font-family:var(--f-display);font-size:64px;letter-spacing:.2em;color:var(--gold);animation:fadeIn .5s both}
 .sl-big .main{font-family:var(--f-display);font-size:190px;line-height:1.25;max-width:1760px;padding:0 20px;color:#fff;-webkit-text-stroke:8px #0b1024;paint-order:stroke fill;transform:skewX(-8deg);animation:popIn .6s .15s both}
@@ -440,7 +446,7 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 </head>
 <body>
 <nav id="modebar" aria-label="画面切り替え">
-  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1106a</span></span>
+  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1106b</span></span>
   <a href="#register" data-mode="register">チーム登録</a>
   <a href="#admin" data-mode="admin">管理</a>
   <a href="#present" data-mode="present">演出</a>
@@ -505,7 +511,9 @@ const CONFIG = {
   ceremony: {
     schedule: [['14:45', 'ラジオ体操', 'Aコート'], ['15:00', '人間玉入れ', 'A・Bコート'], ['15:40', '借り人競争', 'Bコート'],
                ['16:35', '障害物競走', 'Bコート'], ['17:00', 'クイズ', 'Bコート'], ['17:30', '閉会式', 'Bコート']],
-    prize: ['（優勝商品は準備中）'],
+    prize: ['優勝賞品ございます！'],
+    prizeName: 'GODIVA のチョコレート',
+    prizeImages: ['assets/prize/godiva1.jpg', 'assets/prize/godiva2.jpg'],  // GitHub には置かない（Mac と Drive の prize フォルダ）
     cautions: ['水分補給しっかり！', '体調が悪くなったら早めに相談！', 'ケガには気をつけて！', 'ゴミは持ち帰る！', '忘れ物に気をつけよう！'],
     party: ['19:30〜 打ち上げ', '詳しくはチャットを見てください'],
     tamaRules: ['相手チームが背負う籠に、たくさん玉を入れよう', 'うちわで相手の邪魔をしに行ってもOK', '玉は全部で30個。全部入れたら、入れ切った時間で勝負',
@@ -1161,7 +1169,7 @@ const RUN = (() => {
     { label: '閉会式（タイトル）', scene: 'slide', slide: { type: 'big', en: 'CLOSING CEREMONY', main: '閉会式', stage: true } },
     toc('閉会式', CL, 0), { label: '閉会式：追加点の発表（全部）', scene: 'bonus' }, { label: '閉会式：総合順位発表（棒グラフ）→ 優勝', scene: 'finalbars' },
     toc('閉会式', CL, 1), { label: '閉会式：優勝団長挨拶', scene: 'slide', slide: { type: 'big', en: 'CHAMPION', main: '@winner', sub: '優勝団長挨拶', stage: true } },
-    toc('閉会式', CL, 2), { label: '閉会式：優勝商品贈呈', scene: 'slide', slide: { type: 'mystery', en: 'PRIZE', text: '優勝賞品ございます！', stage: true } },
+    toc('閉会式', CL, 2), { label: '閉会式：優勝商品贈呈（次へで中身を公開）', scene: 'slide', slide: { type: 'reveal', en: 'PRIZE', text: '優勝賞品ございます！', stage: true } },
     toc('閉会式', CL, 3), { label: '閉会式：打ち上げ案内', scene: 'slide', slide: { type: 'list', en: 'AFTER PARTY', ja: '打ち上げ案内', key: 'party', big: true } },
     { label: '閉会（ありがとうございました）', scene: 'slide', slide: { type: 'big', en: 'THANK YOU', main: 'ありがとうございました！', sub: 'TKO2026 閉会', stage: true } },
     { label: '集合写真タイム', scene: 'slide', slide: { type: 'big', en: 'PHOTO TIME', main: '集合写真タイム', stage: true } });
@@ -1254,6 +1262,7 @@ function fitStage() { const s = Math.min(innerWidth / 1920, innerHeight / 1080);
 function setScene(sc) { const p = state.present; p.scene = sc; p.step = 0; p.nonce++; if (sc === 'vs' && !p.match) p.match = nextMatchId(); save(); if (mode() === 'present') renderPresent(); }
 function maxStep() {
   const p = state.present;
+  if (p.scene === 'slide') { const it = curRun(); return it && it.slide && it.slide.type === 'reveal' ? 1 : 0; }
   return { title: 1, teams: CONFIG.teams.length, bracket: 0, vs: EV.kehai.battles, rank: CONFIG.teams.length, tama: 2, kariru: 1, relay: 0, quiz: 0, bonus: 0, tally: 0, finalbars: FB_EVENTS.length + 1 }[p.scene] ?? 0;
 }
 function stepBy(d) {
@@ -1319,6 +1328,8 @@ function applyStep(step) {
   if (sc === 'vs') stepVS(step, live);
   if (sc === 'rank') stepRank(step, live, prev);
   if (sc === 'finalbars') stepFinal(step, live);
+  if (sc === 'slide') { const m = $('#slMys'), r = $('#slRev');  // 優勝賞品の公開
+    if (r) { m.hidden = step >= 1; r.hidden = step < 1; if (step >= 1) { fitText(r); if (live) play(CONFIG.assets.sfx.reveal, .9); } } }
   if (sc === 'tama') stepTama(step, live);
   if (sc === 'kariru') updateKariru(live);
 }
@@ -1566,8 +1577,11 @@ function buildSlide(el) {
       [EV.quiz.name, `最大 ${EV.quiz.max}点`],
       ['ボーナス', `ラジオ体操・特別賞など +${EV.radio.points}点`]];
     body = band('POINTS', '得点について') + `<div class="sl-pts">${rows.map(([n, a, b], i) => `<div style="--d:${i * .07}s"><b class="fit">${esc(n)}</b><span><em class="fit">${esc(a)}</em>${b ? `<small class="fit">${esc(b)}</small>` : ''}</span></div>`).join('')}</div>`;
-  } else if (sd.type === 'mystery') {
-    body = `<div class="sl-mys"><div class="en">${esc(sd.en || '')}</div><div class="q">？</div><div class="t fit">${esc(sd.text || '')}</div></div>`;
+  } else if (sd.type === 'mystery' || sd.type === 'reveal') {
+    body = `<div class="sl-mys" id="slMys"><div class="en">${esc(sd.en || '')}</div><div class="q">？</div><div class="t fit">${esc(sd.text || '')}</div></div>`;
+    if (sd.type === 'reveal') body += `<div class="sl-rev" id="slRev" hidden><div class="en">${esc(sd.en || '')}</div>
+      <div class="imgs">${(C.prizeImages || []).map((src, i) => `<img src="${R(src)}" alt="" style="--d:${i * .15}s" onerror="this.remove()">`).join('')}</div>
+      <div class="t fit">${esc(C.prizeName || '')}</div></div>`;
   } else if (sd.type === 'list') {
     const items = C[sd.key] || [];
     body = band(sd.en, sd.ja) + `<div class="sl-list ${sd.big ? 'big' : ''}">${items.map((x, i) => `<div class="fit" style="--d:${i * .08}s">${esc(x)}</div>`).join('')}</div>`;
