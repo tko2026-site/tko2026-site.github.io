@@ -454,7 +454,7 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 </head>
 <body>
 <nav id="modebar" aria-label="画面切り替え">
-  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1106e</span></span>
+  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1106f</span></span>
   <a href="#register" data-mode="register">チーム登録</a>
   <a href="#admin" data-mode="admin">管理</a>
   <a href="#present" data-mode="present">演出</a>
@@ -548,7 +548,7 @@ const CONFIG = {
       // 3・2・1・GO! が1本に入った音声。countdownAt は各カウントが鳴る時刻（ミリ秒）
       countdown: 'assets/sfx/countdown.mp3', countdownAt: [0, 1040, 2020, 3000],
       reveal: 'assets/sfx/reveal.mp3', win: 'assets/sfx/win.mp3', timeup: 'assets/sfx/quiz_close.mp3',
-      bgm: 'assets/sfx/bgm.mp3', gameset: 'assets/sfx/gameset.mp3',
+      bgm: 'assets/bgm/tomoshibi.mp3', gameset: 'assets/sfx/gameset.mp3',
       page: 'assets/sfx/page.mp3',  // 場面をめくったときの音（voice/sentaku.mp3 から作った）
     },
   },
@@ -768,14 +768,14 @@ async function loadDriveAssets() {
     if (mode() === 'present' || mode() === 'admin') { teardownPresent(); rerender(); }
   } catch (e) { toast('ドライブの素材を読み込めませんでした（音・画像なしで続けます）'); }
 }
-function play(src, vol = 1) {
+function play(src, vol = 1, loop = false) {
   src = R(src);
   if (muted || !src) return;
   try {
     let a = audioCache[src];
     if (a === false) return;
     if (!a) { a = new Audio(src); a.addEventListener('error', () => { audioCache[src] = false; }); audioCache[src] = a; }
-    a.currentTime = 0; a.volume = vol; a.play().catch(() => {});
+    a.currentTime = 0; a.volume = vol; a.loop = loop; a.play().catch(() => {});
   } catch (e) {}
 }
 
@@ -1312,7 +1312,7 @@ function renderPresent() {
     if (PREVIEW) muted = true;
     window.addEventListener('resize', fitStage); if (!PREVIEW) window.addEventListener('keydown', presentKey);
     fitStage(); showHint();
-    const gate = $('#gate'); if (gate) gate.onclick = () => { P_unlocked = true; gate.remove(); play(CONFIG.assets.sfx.bgm, .35); };
+    const gate = $('#gate'); if (gate) gate.onclick = () => { P_unlocked = true; gate.remove(); play(CONFIG.assets.sfx.bgm, .35, true); };  // BGM（灯火の星）は繰り返し
     $('#presentRoot').addEventListener('mousemove', showHint);
   }
   const p = state.present;
@@ -1324,7 +1324,8 @@ function renderPresent() {
     P.timers.forEach(clearTimeout); P.timers = [];
     setStageBg();
     stopBreakBgm();
-    if (P.bgmHeld && p.scene !== 'video' && p.scene !== 'break') { const b = bgmAudio(); if (b && !muted) b.play().catch(() => {}); P.bgmHeld = false; }
+    if (p.scene === 'quiz') holdBgm();  // クイズはクイズアプリの曲が流れるので、演出のBGMは止める
+    else if (P.bgmHeld && p.scene !== 'video' && p.scene !== 'break') { const b = bgmAudio(); if (b && !muted) b.play().catch(() => {}); P.bgmHeld = false; }
     P.key = key; P.step = -1;
     sceneEl.innerHTML = '';
     ({ title: buildTitle, teams: buildTeams, bracket: buildBracket, vs: buildVS, rank: buildRank, tama: buildTama, kariru: buildKariru, relay: buildRelay, quiz: buildQuiz, bonus: buildBonus, tally: buildTally, finalbars: buildFinal, slide: buildSlide, video: buildVideo, break: buildBreak })[p.scene](sceneEl);
@@ -1550,6 +1551,7 @@ function buildRank(el) {
 }
 function playVictory(id) {
   if (muted) return;
+  holdBgm();  // 勝利曲のあいだはBGMを止める（次の場面で戻る）
   try { const a = new Audio(CONFIG.assets.victory(id)); a.onerror = () => play(CONFIG.assets.sfx.win); a.play().catch(() => {}); } catch (e) {}
 }
 function stepRank(step, live, prev) {
@@ -1577,6 +1579,7 @@ function setStageBg() {
   const src = R(stage ? CONFIG.assets.bgStage : CONFIG.assets.bg);
   if (img.getAttribute('src') !== src) { img.style.visibility = ''; img.src = src; }
 }
+function holdBgm() { const b = bgmAudio(); if (b && !b.paused) { b.pause(); if (P) P.bgmHeld = true; } }
 function bgmAudio() { return audioCache[R(CONFIG.assets.sfx.bgm)] || null; }
 
 /* 開会式・閉会式のスライド（中身は CONFIG.ceremony） */
@@ -1633,7 +1636,7 @@ function buildBreak(el) {
     <div class="left">あと <b class="num" id="brLeft">--:--</b></div>${b.next ? `<div class="next">次は　${esc(b.next)}</div>` : ''}</div></div>`;
   const v = $('#brVid'); v.onerror = () => v.remove(); v.src = R(CONFIG.assets.breakVideo); v.play().catch(() => {});
   // 休憩のBGM：鳴り始めたらいつものBGMを止める（曲がなければ何もしない）
-  if (!muted && !PREVIEW && !P.brAudio) {
+  if (!muted && !PREVIEW && !P.brAudio && R(CONFIG.assets.breakBgm) !== R(CONFIG.assets.sfx.bgm)) {  // いつものBGMと同じ曲なら切り替えない
     const a = new Audio(R(CONFIG.assets.breakBgm)); a.loop = true; a.volume = .5; P.brAudio = a;
     a.addEventListener('playing', () => { const bg = bgmAudio(); if (bg && !bg.paused) { bg.pause(); P.bgmHeld = true; } }, { once: true });
     a.play().catch(() => {});
