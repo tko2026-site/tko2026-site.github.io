@@ -450,7 +450,7 @@ table.t th{font-size:12px;color:var(--muted);font-weight:700}
 </head>
 <body>
 <nav id="modebar" aria-label="画面切り替え">
-  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1106c</span></span>
+  <span class="brand"><b>TKO2026</b> 大会システム <span class="muted small" title="サイトの版">v1106d</span></span>
   <a href="#register" data-mode="register">チーム登録</a>
   <a href="#admin" data-mode="admin">管理</a>
   <a href="#present" data-mode="present">演出</a>
@@ -1183,7 +1183,7 @@ const RUN = (() => {
 })();
 const STEPLABEL = { title: ['タイトル', 'オープニング映像'], teams: i => i ? `${i} / ${CONFIG.teams.length} チーム紹介済み` : '全チーム表示',
   rank: i => i ? `${i} / ${CONFIG.teams.length} 位まで公開` : '順位は伏せた状態', tama: ['対戦カード', 'カウントダウン → 試合中', '結果表示'],
-  kariru: ['出走者', '結果'], bracket: ['表示中'], relay: ['表示中'], quiz: ['表示中'], bonus: ['表示中'], tally: ['表示中'], slide: ['表示中'], video: ['再生'], break: ['表示中'] };
+  kariru: ['出走者', '結果'], bracket: ['表示中'], relay: ['表示中'], quiz: ['表示中'], bonus: ['表示中'], tally: ['表示中'], slide: ['表示中'], video: ['再生'], break: ['表示中'], finalbars: ['棒は0のまま（次へで種目ごとに自動で伸びる）', '全種目伸びた（次へで並べ替えて優勝発表）', '優勝発表'] };
 function stepLabel() { const p = state.present, f = STEPLABEL[p.scene]; return typeof f === 'function' ? f(p.step) : (f || [])[p.step] || ''; }
 function goRun(i) {
   i = Math.max(0, Math.min(RUN.length - 1, i));
@@ -1276,7 +1276,7 @@ function setScene(sc) { const p = state.present; p.scene = sc; p.step = 0; p.non
 function maxStep() {
   const p = state.present;
   if (p.scene === 'slide') { const it = curRun(); return it && it.slide && it.slide.type === 'reveal' ? 1 : 0; }
-  return { title: 1, teams: CONFIG.teams.length, bracket: 0, vs: EV.kehai.battles, rank: CONFIG.teams.length, tama: 2, kariru: 1, relay: 0, quiz: 0, bonus: 0, tally: 0, finalbars: FB_EVENTS.length + 1 }[p.scene] ?? 0;
+  return { title: 1, teams: CONFIG.teams.length, bracket: 0, vs: EV.kehai.battles, rank: CONFIG.teams.length, tama: 2, kariru: 1, relay: 0, quiz: 0, bonus: 0, tally: 0, finalbars: 2 }[p.scene] ?? 0;
 }
 function stepBy(d) {
   const p = state.present; p.step = Math.max(0, Math.min(maxStep(), p.step + d));
@@ -1678,9 +1678,16 @@ function countUp(el, from, to, ms) {
   const tick = now => { const k = Math.min(1, (now - t0) / ms); el.textContent = Math.round(from + (to - from) * k); if (k < 1 && el.isConnected) requestAnimationFrame(tick); };
   requestAnimationFrame(tick);
 }
+// 次へ1回目：種目ごとの帯が自動で1つずつ伸びる／2回目：並べ替えて優勝
+const FB_GAP = 2200;  // 帯が1本伸びてから次の帯までの間（ミリ秒）
 function stepFinal(step, live) {
   if (!P.fb) return;
-  const { pts, max } = P.fb, n = FB_EVENTS.length, shown = Math.min(step, n), done = step > n;
+  const n = FB_EVENTS.length;
+  if (step === 1 && live) { for (let k = 1; k <= n; k++) later(() => drawFinal(k, false, true), (k - 1) * FB_GAP); drawFinal(0, false, false); return; }
+  drawFinal(step >= 1 ? n : 0, step >= 2, live);
+}
+function drawFinal(shown, done, live) {
+  const { pts, max } = P.fb, n = FB_EVENTS.length, step = done ? n + 1 : shown;
   FB_EVENTS.forEach((e, i) => { const l = $('#fbl' + i); if (l) { l.classList.toggle('on', i < shown); l.classList.toggle('cur', i === shown - 1 && !done); } });
   // 最後の段階だけ点数順に並べ替える（同点は同順位）
   const order = done ? CONFIG.teams.map(t => ({ t, pt: pts[t.id].total })).sort((a, b) => b.pt - a.pt) : CONFIG.teams.map(t => ({ t, pt: 0 }));
@@ -1695,7 +1702,7 @@ function stepFinal(step, live) {
     if (live && !done) countUp(tot, Number(tot.textContent) || 0, sum, 1100); else tot.textContent = sum;
   });
   const wl = $('#winLayer'); if (wl) wl.innerHTML = '';
-  if (live && step > 0 && !done) play(CONFIG.assets.sfx.reveal, .8);
+  if (live && shown > 0 && !done) play(CONFIG.assets.sfx.reveal, .8);
   if (done && live && order[0]) {
     play(CONFIG.assets.sfx.reveal, .8);
     const t = order[0].t;
