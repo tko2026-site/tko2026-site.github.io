@@ -527,7 +527,7 @@ const CONFIG = {
     cautions: ['水分補給しっかり！', '体調が悪くなったら早めに相談！', 'ケガには気をつけて！', 'ゴミは持ち帰る！', '忘れ物に気をつけよう！'],
     party: ['19:30〜 打ち上げ', '詳しくはチャットを見てください'],
     tamaRules: ['相手チームが背負う籠に、たくさん玉を入れよう', 'うちわで相手の邪魔をしに行ってもOK', '玉は全部で30個。全部入れたら、入れ切った時間で勝負',
-                '制限時間5分。勝ち20点・引き分け10点・負け0点', '人を攻撃するなど危ない行動はペナルティ・退場'],
+                '制限時間5分（第3試合からは1分）。勝ち20点・引き分け10点・負け0点', '人を攻撃するなど危ない行動はペナルティ・退場'],
     kariruRules: ['はじめは全員起立！ 一度選ばれた人は座る', '全8回、各回1チーム1人がお題に合うメンターを連れてゴール', 'ゴールした順に、インタビューでお題に合っているか確認',
                   '合っていなければ失格（0点）、順位は繰り上げ', '1位20点〜8位1点、チーム全員が選ばれたら +10点'],
   },
@@ -918,7 +918,7 @@ function renderRegister() {
     <section class="panel stack"><div class="evhead"><h2>${EV.kariru.name}</h2><span class="muted small">5分 × ${EV.kariru.rounds}回。各回に1人</span></div>
       ${en.kariru.map((v, i) => `<div class="slot"><span class="lab">第${i + 1}回</span><select id="kr${i}" data-ev="kariru" data-i="${i}" ${ro ? 'disabled' : ''}>${opts(v)}</select></div>`).join('')}</section>
 
-    <section class="panel stack"><div class="evhead"><h2>${EV.kehai.name}</h2><span class="muted small">2チームずつ対戦（${EV.kehai.minutes}分）。${EV.kehai.slot}を${EV.kehai.battles}人決める（球が当たっても平気な人）</span></div>
+    <section class="panel stack"><div class="evhead"><h2>${EV.kehai.name}</h2><span class="muted small">2チームずつ対戦（第1・2試合は${EV.kehai.minutes}分、第3試合から1分）。${EV.kehai.slot}を${EV.kehai.battles}人決める（球が当たっても平気な人）</span></div>
       ${en.kehai.map((v, i) => `<div class="slot"><span class="lab">${EV.kehai.battles > 1 ? `${EV.kehai.slot}${i + 1}` : EV.kehai.slot}</span><select id="kh${i}" data-ev="kehai" data-i="${i}" ${ro ? 'disabled' : ''}>${opts(v)}</select></div>`).join('')}</section>
 
     <section class="panel stack"><div class="evhead"><h2>${EV.relay.name}</h2><span class="muted small">全${EV.relay.legs.length}走・${EV.relay.legs.reduce((a, l) => a + l.people, 0)}人</span></div>
@@ -1357,6 +1357,8 @@ function applyStep(step) {
 
 /* 人間玉入れ：2コート同時の対戦 */
 function tamaMatches(k) { return EV.kehai.courts.map((c, ci) => match(`C${ci + 1}-${k}`)); }
+// 制限時間：第1・2試合は5分、第3試合からは1分
+const tamaMin = k => (+k >= 3 ? 1 : EV.kehai.minutes);
 function buildTama(el) {
   const k = state.present.round || 1;
   const side = (id, mid, s) => { const t = TEAM[id]; return `<div class="tside" id="ts_${mid}_${s}" style="--tc:${t.color}">${timg(t)}<b style="font-size:${t.name.length > 5 ? 34 : 44}px">${esc(t.name)}</b>
@@ -1364,18 +1366,18 @@ function buildTama(el) {
   el.innerHTML = `<div class="scene sc-tama" id="scTama"><div class="band"><span class="en">MATCH ${k}</span><span class="ja">${esc(EV.kehai.name)}　第${k}試合</span></div>
     <div class="courts">${tamaMatches(k).map(m => `<div class="court"><div class="cname">${esc(m.def.court)}</div>
       <div class="pair">${side(m.L, m.id, 'a')}<div class="v">VS</div>${side(m.R, m.id, 'b')}</div></div>`).join('')}</div>
-    <div class="tmr num" id="tamaTimer">${EV.kehai.minutes}:00</div><div id="countLayer"></div></div>`;
+    <div class="tmr num" id="tamaTimer">${tamaMin(k)}:00</div><div id="countLayer"></div></div>`;
   later(() => play(CONFIG.assets.sfx.vs, .9), 400);
   tamaTick();
 }
 function tamaTick() {
   const el = $('#tamaTimer'); if (!el) return;
-  const p = state.present, total = EV.kehai.minutes * 60000;
+  const p = state.present, total = tamaMin(state.present.round || 1) * 60000;
   if (p.timerAt && p.step >= 1) {
     const rem = total - Math.max(0, Date.now() - p.timerAt);
     if (rem > 0) { const s = Math.ceil(rem / 1000); el.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; el.classList.toggle('low', s <= 30); el.classList.remove('up'); }
     else { el.textContent = 'TIME UP'; el.classList.add('up'); if (P && !P.timeup) { P.timeup = true; if (Date.now() - p.timerAt - total < 3000) play(CONFIG.assets.sfx.timeup); } }
-  } else { el.textContent = `${EV.kehai.minutes}:00`; el.classList.remove('low', 'up'); }
+  } else { el.textContent = `${tamaMin(state.present.round || 1)}:00`; el.classList.remove('low', 'up'); }
   later(tamaTick, 250);
 }
 function stepTama(step, live) {
@@ -1756,7 +1758,7 @@ function renderCourt() {
   const k = courtRound || live || (MATCHES.filter(d => d.court === c.name).map(d => match(d.id)).findIndex(m => !m.done) + 1) || 4;
   const m = match(`C${ci}-${k}`), r = state.results.kehai[m.id] || {}, L = TEAM[m.L], Rt = TEAM[m.R];
   let tm = '';
-  if (live === k && p.timerAt && p.step >= 1) { const rem = EV.kehai.minutes * 60000 - Math.max(0, Date.now() - p.timerAt); const sec = Math.ceil(rem / 1000); tm = rem > 0 ? `残り ${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}` : 'TIME UP'; }
+  if (live === k && p.timerAt && p.step >= 1) { const rem = tamaMin(k) * 60000 - Math.max(0, Date.now() - p.timerAt); const sec = Math.ceil(rem / 1000); tm = rem > 0 ? `残り ${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}` : 'TIME UP'; }
   const side = (t, key, v, opp) => `<div class="cside" style="--tc:${t.color}"><div class="cnm"><span class="tdot" style="--tc:${t.color}"></span>${esc(t.name)}の得点</div>
     <div class="csub">＝ <b style="color:${opp.color}">${esc(opp.name)}</b> の籠に入った玉</div>
     <div class="cnum num">${v ?? '—'}</div>
